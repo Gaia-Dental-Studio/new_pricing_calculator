@@ -14,18 +14,30 @@ class Multiproduct_Calculator():
         self.monthlyPayment = None
         self.totalPayment = None
         self.invoice = None
-        response = requests.get("http://127.0.0.1:5000/get_parameters")
-        if response.status_code == 200:
-            params = response.json()
-            self.cpi = params['cpi']
-            self.markup_percentage = params['markup_percentage']
-            self.maintenance_ratio = params['maintenance_ratio']
-            self.warranty_rate = params['warranty_rate']
-            self.insurance_rate = params['insurance_rate']
-            self.travel_labor_cost = params['travel_labor_cost']
-            self.business_con_rate = params['business_con_rate']
-        else:
-            st.error("Failed to load parameters!")
+        
+                
+        # COMMENT THIS IF FLASK CONNECTION IS WORKING
+        self.cpi = 0.12
+        self.markup_percentage = 0.001
+        self.maintenance_ratio = 0.08
+        self.warranty_rate = 0.05
+        self.insurance_rate = 0.015
+        self.travel_labor_cost = 300
+        self.business_con_rate = 0.02
+        
+        # UNCOMMENT THIS IF FLASK CONNECTION IS WORKING
+        # response = requests.get("http://127.0.0.1:5000/get_parameters")
+        # if response.status_code == 200:
+        #     params = response.json()
+        #     self.cpi = params['cpi']
+        #     self.markup_percentage = params['markup_percentage']
+        #     self.maintenance_ratio = params['maintenance_ratio']
+        #     self.warranty_rate = params['warranty_rate']
+        #     self.insurance_rate = params['insurance_rate']
+        #     self.travel_labor_cost = params['travel_labor_cost']
+        #     self.business_con_rate = params['business_con_rate']
+        # else:
+        #     st.error("Failed to load parameters!")
 
     def getMarkup_Price(self, EquipmentPrice):
         return EquipmentPrice + (EquipmentPrice * self.markup_percentage)

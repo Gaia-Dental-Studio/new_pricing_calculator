@@ -28,14 +28,19 @@ st.session_state.parameters['business_con_rate'] = st.number_input("Business Con
 
 # Save the parameters and send to Flask server
 if st.button("Save Parameters"):
-    try:
-        response = requests.post("http://127.0.0.1:5000/set_parameters", json=st.session_state.parameters)
-        if response.status_code == 200:
-            st.success("Parameters saved successfully!")
-        else:
-            st.error("Failed to save parameters!")
-    except Exception as e:
-        st.error(f"Error: {e}")
+    
+    # COMMENT THIS IF FLASK CONNECTION IS NOT WORKING
+    st.success("Parameters is not updated since Flask is not running for now!")
+    
+    # UNCOMMENT THIS IF FLASK CONNECTION IS WORKING
+    # try:
+    #     response = requests.post("http://127.0.0.1:5000/set_parameters", json=st.session_state.parameters)
+    #     if response.status_code == 200:
+    #         st.success("Parameters saved successfully!")
+    #     else:
+    #         st.error("Failed to save parameters!")
+    # except Exception as e:
+    #     st.error(f"Error: {e}")
 
 # Display the current values
 st.write("### Current Parameter Values:")
