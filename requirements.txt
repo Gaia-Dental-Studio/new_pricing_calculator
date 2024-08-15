@@ -4,3 +4,4 @@ numpy_financial
 pandas
 Requests
 streamlit
+openpyxl
