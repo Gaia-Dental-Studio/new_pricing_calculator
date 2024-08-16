@@ -136,12 +136,18 @@ with st.form(key='myform'):
 
         res1, res2, res3 = st.columns([1, 1, 1])
         with res1: 
-            calculator.setName("Total Invoice ($)")
-            calculator.displayResult(st.session_state.invoice)
+            # calculator.setName("Total Invoice ($)")
+            # calculator.displayResult(st.session_state.invoice)
+            st.markdown("Total Invoice ($)")
+            st.write(f"### {st.session_state.invoice}")
         with res2: 
-            calculator.setName("Monthly Repayment ($)")
-            calculator.displayResult(st.session_state.repayment)
+            # calculator.setName("Monthly Repayment ($)")
+            # calculator.displayResult(st.session_state.repayment)
+            st.markdown("Monthly Repayment ($)")
+            st.write(f"### {st.session_state.repayment}")
         with res3:
-            calculator.setName("Loan Term (Months)")
-            calculator.displayResult(st.session_state.loanterm * 12)
+            # calculator.setName("Loan Term (Months)")
+            # calculator.displayResult(st.session_state.loanterm * 12)
+            st.markdown("Loan Term (Months)")
+            st.write(f"### {st.session_state.loanterm * 12}")
 

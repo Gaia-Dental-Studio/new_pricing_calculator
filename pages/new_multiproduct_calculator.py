@@ -60,10 +60,11 @@ class Multiproduct_Calculator():
         total_after_travel_labor = total_package_price + self.travel_labor_cost
         return total_after_travel_labor
     
-    def getMonthlyPayment(self, total_after_travel_labor, basket_df):
-        warranty_yrs = basket_df['Warranty'].max()
+    def getMonthlyPayment(self, total_after_travel_labor, basket_df, LoanTerm):
+        # warranty_yrs = basket_df['Warranty'].max()
+        
         monthly_interest_rate = ((1+self.cpi)**(1/12))-1
-        monthlyPayment = npf.pmt(monthly_interest_rate, warranty_yrs*12, -total_after_travel_labor)
+        monthlyPayment = npf.pmt(monthly_interest_rate, LoanTerm*12, -total_after_travel_labor)
         return monthlyPayment
 
     def setName(self, name):
@@ -161,20 +162,20 @@ with st.form(key='myform'):
         st.success(f'{selected_product} ({selected_type}) added to the basket', icon="✅")
 
 if st.session_state.all_results != []:        
-    st.dataframe(pd.DataFrame(st.session_state.all_results)[['Product', 'Type']], hide_index=True)
+    st.dataframe(pd.DataFrame(st.session_state.all_results)[['Product','Type']], hide_index=True)
 
 if st.button("Reset Basket"):
     st.session_state.all_results = []
 
 if st.button("Get Total"):
     if st.session_state.all_results:
-        st.write("All Saved Results:")
+        st.write("All Basket Items:")
 
         basket_df = pd.DataFrame(st.session_state.all_results)
         calculator = Multiproduct_Calculator()
 
         total_after_travel_labor = calculator.getTotalPackageWithTravel(basket_df)
-        monthlyPayment = calculator.getMonthlyPayment(total_after_travel_labor, basket_df)
+        monthlyPayment = calculator.getMonthlyPayment(total_after_travel_labor, basket_df, LoanTermVar)
 
         def format_currency(value):
             return "${:,.2f}".format(value)
@@ -182,7 +183,7 @@ if st.button("Get Total"):
         def create_merged_html(df, total, monthly_payment):
             html = '<table border="1" style="width: 100%; border-collapse: collapse; text-align: center;">'
             html += '<thead><tr><th>Product</th><th>Type</th><th>Price</th><th>Warranty (Year)</th><th>Price with Package</th>'
-            html += '<th>Total with Maintenance Travel Cost</th><th>Monthly Repayment</th></tr></thead><tbody>'
+            html += '<th>Total with Maintenance Travel Cost</th><th>Monthly Repayment</th><th>Loan Term (Months)</th></tr></thead><tbody>'
             
             for index, row in df.iterrows():
                 html += '<tr>'
@@ -191,6 +192,7 @@ if st.button("Get Total"):
                 if index == 0:
                     html += f'<td rowspan="{len(df)}">{format_currency(total)}</td>'
                     html += f'<td rowspan="{len(df)}">{format_currency(monthly_payment)}</td>'
+                    html += f'<td rowspan="{len(df)}">{(LoanTermVar * 12)}</td>'
                 html += '</tr>'
             
             html += '</tbody></table>'
@@ -198,3 +200,4 @@ if st.button("Get Total"):
 
         html_table = create_merged_html(basket_df, total_after_travel_labor, monthlyPayment)
         st.markdown(html_table, unsafe_allow_html=True)
+        st.caption("Note: The Monthly Repayment will be paid for the entire Loan Term (in months), not just for the warranty period.")
