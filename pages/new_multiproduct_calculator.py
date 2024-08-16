@@ -100,14 +100,14 @@ if 'prev_LoanTermVar' not in st.session_state:
     st.session_state.prev_LoanTermVar = None  # Set to the default value
 
 # Create the number input for LoanTermVar
-LoanTermVar = st.number_input("Loan Term (Years)", step=1, value=st.session_state.prev_LoanTermVar)
+LoanTermVar = st.number_input("Loan Term (Years)", step=1, value=st.session_state.prev_LoanTermVar, help="Please input the loan term for all products you are about to add to the basket")
 
-# Check if the value has changed
+# Check if the value has changed    
 if LoanTermVar != st.session_state.prev_LoanTermVar:
     st.success('Successfully input Loan Term (Please reset your basket first if you are about to run with different Loan Term)', icon="✅")
     st.session_state.prev_LoanTermVar = LoanTermVar  # Update the previous value
 
-selected_product = st.selectbox('Choose Product', product_list)
+selected_product = st.selectbox('Choose Product', product_list, placeholder="Select product")
 price = 0
 warranty_val = 0
 
@@ -145,6 +145,11 @@ with st.form(key='myform'):
     submitted = st.form_submit_button("Add to Basket")
 
     if submitted:
+        
+        if LoanTermVar is None:
+            st.error("Please input Loan Term first!")
+            st.stop()               
+        
         calculator = Multiproduct_Calculator()
         markup_price = calculator.getMarkup_Price(EquipmentPriceVar)
         price_with_package = calculator.getPayment_NoTravel(EquipmentPriceVar, LoanTermVar, terminal_rate, insurance_opt_in)

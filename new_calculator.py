@@ -100,7 +100,7 @@ products = df[df['Product Name'].str.contains(r'[a-zA-Z]', na=False)]['Product N
 product_list = ['Others']
 product_list.extend(products.tolist()) 
 
-selected_product = st.selectbox('Choose Product', product_list)
+selected_product = st.selectbox('Choose Product', product_list, placeholder="Select product")
 price = 0
 
 if selected_product != 'Others':
