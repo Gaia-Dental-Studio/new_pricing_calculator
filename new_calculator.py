@@ -55,11 +55,21 @@ class Calculator():
         monthlyPayment = npf.pmt(monthly_interest_rate, LoanTerm*12, -total_payment,1)
 
         self.monthlyPayment = monthlyPayment
+        
+        results = {
+            "total_before_travel_labor": total_before_travel_labor,
+            "total_payment": total_payment,
+            "monthlyPayment": monthlyPayment,
+            "maintenance_fee": maintenance_fee,
+            "warranty_fee": warranty_fee,
+            "insurance_fee": insurance_fee,
+        }
 
-        return monthlyPayment
+        return results
+
 
     def getInvoice(self, EquipmentPrice, LoanTerm, terminal_rate, insurance): 
-        invoice = self.getMonthlyPayment(EquipmentPrice, LoanTerm, terminal_rate, insurance) * LoanTerm * 12
+        invoice = self.getMonthlyPayment(EquipmentPrice, LoanTerm, terminal_rate, insurance)['monthlyPayment'] * LoanTerm * 12
         return invoice
 
     def setName(self, name):
@@ -128,7 +138,10 @@ with st.form(key='myform'):
     if submitted:
         calculator = Calculator()
         invoice = calculator.getInvoice(EquipmentPriceVar, LoanTermVar, terminal_rate, insurance_opt_in)
-        monthlyPayment = calculator.getMonthlyPayment(EquipmentPriceVar, LoanTermVar, terminal_rate, insurance_opt_in)
+        monthlyPayment = calculator.getMonthlyPayment(EquipmentPriceVar, LoanTermVar, terminal_rate, insurance_opt_in)['monthlyPayment']
+        warranty_fee = calculator.getMonthlyPayment(EquipmentPriceVar, LoanTermVar, terminal_rate, insurance_opt_in)['warranty_fee']
+        maintenance_fee = calculator.getMonthlyPayment(EquipmentPriceVar, LoanTermVar, terminal_rate, insurance_opt_in)['maintenance_fee']
+        insurance_fee = calculator.getMonthlyPayment(EquipmentPriceVar, LoanTermVar, terminal_rate, insurance_opt_in)['insurance_fee']
 
         st.session_state.invoice = format(invoice, '10.2f')
         st.session_state.repayment = format(monthlyPayment, '10.2f')
@@ -150,4 +163,24 @@ with st.form(key='myform'):
             # calculator.displayResult(st.session_state.loanterm * 12)
             st.markdown("Loan Term (Months)")
             st.write(f"### {st.session_state.loanterm * 12}")
+            
+        
+        st.divider()
+        
+        with st.expander("Detailed Cost Structure", expanded=False):
+            res4, res5, res6 = st.columns([1, 1, 1])
+            
+            with res4:
+                st.markdown("Maintenance Fee ($)")
+                st.write(f"### {format(maintenance_fee, '10.2f')}")
+                
+            with res5:
+                st.markdown("Warranty Fee ($)")
+                st.write(f"### {format(warranty_fee, '10.2f')}")
+                
+            with res6:
+                st.markdown("Insurance Fee ($)")
+                st.write(f"### {format(insurance_fee, '10.2f')}")
+
+        
 
