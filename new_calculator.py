@@ -112,11 +112,13 @@ class Calculator():
         # Round up to the nearest whole number of months
         LoanTerm_months_rounded = math.ceil(LoanTerm_months)
         
-        # Recalculate the total payment based on the rounded LoanTerm
-        total_payment_rounded = npf.pv(monthly_interest_rate, LoanTerm_months_rounded, -monthlyPayment, -1)
+        # Step 3: Calculate the remaining balance after making nper_rounded - 1 payments
+        remaining_balance = npf.fv(monthly_interest_rate, LoanTerm_months_rounded - 1, -monthlyPayment, total_payment)
+
+        # Step 4: Calculate the final payment to settle the remaining balance
+        final_payment = remaining_balance * (1 + monthly_interest_rate)
         
-        # Calculate the payment for the last month (less than the regular monthly payment)
-        last_monthlyPayment = total_payment_rounded - (monthlyPayment * (LoanTerm_months_rounded - 1))
+        last_monthlyPayment = -final_payment
         
         # Calculate the LoanTerm in years
         LoanTerm_years = LoanTerm_months_rounded / 12
@@ -127,7 +129,7 @@ class Calculator():
 
         results = {
             "total_before_terminal": total_before_terminal,
-            "total_payment": total_payment_rounded,
+            "total_payment": total_payment,
             "LoanTerm_years": LoanTerm_years,
             "LoanTerm_months": LoanTerm_months_rounded,
             "last_monthlyPayment": last_monthlyPayment,
@@ -179,9 +181,11 @@ if selected_product != 'Others':
     types = df[df['Product Name'] == selected_product]['Type'].dropna().unique().tolist()
     selected_type = st.selectbox('Choose Product Type', types)
     if selected_type:
-        price = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Price'].iloc[0]
+        price = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Price'].iloc[0] 
+        price = round(price * (1+Calculator().markup_percentage))
     else:
         price = df.loc[df['Product Name'] == selected_product, 'Price'].iloc[0]
+        price = round(price * (1+Calculator().markup_percentage))
 else:
     selected_product = None
     selected_type = None
@@ -232,8 +236,8 @@ with st.form(key='myform'):
         calculator = Calculator()
         
         if Scheme == 'By Loan Term':
-            invoice = calculator.getInvoice(EquipmentPriceVar, LoanTermVar, terminal_rate, insurance_opt_in, Maintenance, ExtraWarranty, BusinessCon)
             main_results = calculator.getMonthlyPayment(EquipmentPriceVar, LoanTermVar, terminal_rate, insurance_opt_in, Maintenance, ExtraWarranty, BusinessCon)
+            invoice = main_results['total_payment']
             monthlyPayment = main_results['monthlyPayment']
             warranty_fee = main_results['warranty_fee']
             maintenance_fee = main_results['maintenance_fee']
@@ -258,8 +262,9 @@ with st.form(key='myform'):
         with res1: 
             # calculator.setName("Total Invoice ($)")
             # calculator.displayResult(st.session_state.invoice)
-            st.markdown("Total Invoice ($)")
+            st.markdown("Total Price with Package ($)")
             st.write(f"### {st.session_state.invoice}")
+            st.caption('Include Travel Fee')
         with res2: 
             # calculator.setName("Monthly Repayment ($)")
             # calculator.displayResult(st.session_state.repayment)

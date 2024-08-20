@@ -2,8 +2,8 @@ import streamlit as st
 import requests
 
 # Set up the page
-st.set_page_config(page_title="Set Parameters", page_icon=":wrench:", layout="centered")
-st.title(":wrench: Set Calculator Parameters")
+st.set_page_config(page_title="Set Parameters", layout="centered")
+st.title("Set Calculator Parameters")
 
 # Initialize session state for all parameters if not already done
 if 'parameters' not in st.session_state:
