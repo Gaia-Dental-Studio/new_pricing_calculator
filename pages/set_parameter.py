@@ -17,20 +17,28 @@ if 'parameters' not in st.session_state:
         'business_con_rate': 0.02
     }
 
-# Input fields for each parameter
-st.session_state.parameters['cpi'] = st.number_input("CPI (%)", step=0.01, value=st.session_state.parameters['cpi'])
-st.session_state.parameters['markup_percentage'] = st.number_input("Markup Percentage", step=0.0001, value=st.session_state.parameters['markup_percentage'])
-st.session_state.parameters['maintenance_ratio'] = st.number_input("Maintenance Ratio", step=0.01, value=st.session_state.parameters['maintenance_ratio'])
-st.session_state.parameters['warranty_rate'] = st.number_input("Warranty Rate", step=0.01, value=st.session_state.parameters['warranty_rate'])
-st.session_state.parameters['insurance_rate'] = st.number_input("Insurance Rate", step=0.01, value=st.session_state.parameters['insurance_rate'])
-st.session_state.parameters['travel_labor_cost'] = st.number_input("Travel Labor Cost ($)", step=1, value=st.session_state.parameters['travel_labor_cost'])
-st.session_state.parameters['business_con_rate'] = st.number_input("Business Continuity Rate", step=0.01, value=st.session_state.parameters['business_con_rate'])
+# Create columns for input fields
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.session_state.parameters['cpi'] = st.number_input("CPI (%)", step=0.01, value=st.session_state.parameters['cpi'])
+    st.session_state.parameters['warranty_rate'] = st.number_input("Warranty Rate", step=0.01, value=st.session_state.parameters['warranty_rate'])
+    st.session_state.parameters['business_con_rate'] = st.number_input("Business Continuity Rate", step=0.01, value=st.session_state.parameters['business_con_rate'])
+
+with col2:
+    st.session_state.parameters['markup_percentage'] = st.number_input("Markup Percentage", step=0.0001, value=st.session_state.parameters['markup_percentage'])
+    st.session_state.parameters['insurance_rate'] = st.number_input("Insurance Rate", step=0.01, value=st.session_state.parameters['insurance_rate'])
+
+with col3:
+    st.session_state.parameters['maintenance_ratio'] = st.number_input("Maintenance Ratio", step=0.01, value=st.session_state.parameters['maintenance_ratio'])
+    st.session_state.parameters['travel_labor_cost'] = st.number_input("Travel Labor Cost ($)", step=1, value=st.session_state.parameters['travel_labor_cost'])
 
 # Save the parameters and send to Flask server
+st.markdown("---")
 if st.button("Save Parameters"):
     
     # COMMENT THIS IF FLASK CONNECTION IS NOT WORKING
-    st.success("Parameters is not updated since Flask is not running for now!")
+    st.success("Parameters are not updated since Flask is not running for now!")
     
     # UNCOMMENT THIS IF FLASK CONNECTION IS WORKING
     # try:
@@ -43,5 +51,5 @@ if st.button("Save Parameters"):
     #     st.error(f"Error: {e}")
 
 # Display the current values
-st.write("### Current Parameter Values:")
-st.write(st.session_state.parameters)
+st.markdown("### Current Parameter Values:")
+st.json(st.session_state.parameters)
