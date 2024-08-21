@@ -189,35 +189,38 @@ with st.expander('Loan Scheme', expanded=True):
         MaximumMonthly = st.slider(label='Maximum Monthly Rate ($)', min_value=100, max_value=2000, value=500, step=50)
         st.session_state.prev_LoanTermVar = None  # Reset LoanTermVar when using the maximum monthly rate scheme
 
-selected_product = st.selectbox('Choose Product', product_list, placeholder="Select product")
-price = 0
-warranty_val = 0
+with st.expander('Product Selection', expanded=True):
+    selected_product = st.selectbox('Choose Product', product_list, placeholder="Select product")
+    price = 0
+    warranty_val = 0
 
-if selected_product != 'Others':
-    types = df[df['Product Name'] == selected_product]['Type'].dropna().unique().tolist()
-    selected_type = st.selectbox('Choose Product Type', types)
-    if selected_type:
-        price = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Price'].iloc[0]
-        warranty_val = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Warranty (years)'].iloc[0]
+    if selected_product != 'Others':
+        types = df[df['Product Name'] == selected_product]['Type'].dropna().unique().tolist()
+        selected_type = st.selectbox('Choose Product Type', types)
+        if selected_type:
+            price = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Price'].iloc[0]
+            price = round(price * (1+Multiproduct_Calculator().markup_percentage))
+            warranty_val = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Warranty (years)'].iloc[0]
+        else:
+            price = df.loc[df['Product Name'] == selected_product, 'Price'].iloc[0]
+            price = round(price * (1+Multiproduct_Calculator().markup_percentage))
+            warranty_val = df.loc[df['Product Name'] == selected_product, 'Warranty (years)'].iloc[0]
     else:
-        price = df.loc[df['Product Name'] == selected_product, 'Price'].iloc[0]
-        warranty_val = df.loc[df['Product Name'] == selected_product, 'Warranty (years)'].iloc[0]
-else:
-    selected_product = None
-    selected_type = None
+        selected_product = None
+        selected_type = None
 
 with st.form(key='myform'):
-    with st.expander("Input", expanded=True):
+    with st.expander("Additional Package Customization", expanded=True):
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            EquipmentPriceVar = st.number_input("Equipment Cost ($)", step=1, value=price)
+            EquipmentPriceVar = st.number_input("Equipment Cost ($)", step=1, value=price, disabled=True)
             
         with col2:
             insurance_opt_in = st.selectbox("Insurance Opt in", ('Yes', 'No'))
 
         with col3:
-            terminal_rate = st.number_input("Terminal Rate (%)", step=0.01, value=0.02)
+            terminal_rate = st.number_input("Terminal Rate (%)", step=0.01, value=0.00)
 
         col4, col5 = st.columns(2)
 

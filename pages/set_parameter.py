@@ -5,6 +5,8 @@ import requests
 st.set_page_config(page_title="Set Parameters", layout="centered")
 st.title("Set Calculator Parameters")
 
+st.markdown("This interface is only visible for internals. Not for public/client use.")
+
 # Initialize session state for all parameters if not already done
 if 'parameters' not in st.session_state:
     st.session_state.parameters = {

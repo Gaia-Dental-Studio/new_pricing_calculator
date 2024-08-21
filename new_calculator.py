@@ -45,10 +45,10 @@ class Calculator():
         warranty_yrs = 1 if markup_price < 2000 else 2 if markup_price < 5000 else 3 if markup_price < 10000 else 5
         additional_warranty = extra_warranty
         warranty_fee = markup_price * self.warranty_rate * (warranty_yrs + additional_warranty)
-        insurance_fee = markup_price * self.insurance_rate * warranty_yrs if insurance == 'Yes' else 0
+        insurance_fee = markup_price * self.insurance_rate * (warranty_yrs + additional_warranty) if insurance == 'Yes' else 0
         travel_labor_cost = self.travel_labor_cost
-        business_con_fee = (markup_price * self.business_con_rate * LoanTerm if insurance == 'Yes' else 0) if bussiness_con == 'Yes' else 0
-        terminal_value = markup_price * terminal_rate * LoanTerm
+        business_con_fee = (markup_price * self.business_con_rate * (warranty_yrs + additional_warranty) if insurance == 'Yes' else 0) if bussiness_con == 'Yes' else 0
+        terminal_value = markup_price * terminal_rate * (warranty_yrs + additional_warranty)
 
         total_before_travel_labor = markup_price + maintenance_fee + warranty_fee + insurance_fee + business_con_fee + terminal_value
         total_payment = total_before_travel_labor + travel_labor_cost
@@ -65,6 +65,8 @@ class Calculator():
             "maintenance_fee": maintenance_fee,
             "warranty_fee": warranty_fee,
             "insurance_fee": insurance_fee,
+            "business_con_fee": business_con_fee,
+            "terminal_value_fee": terminal_value
         }
 
         return results
@@ -84,7 +86,7 @@ class Calculator():
         warranty_fee = markup_price * self.warranty_rate * (warranty_yrs + additional_warranty)
         
         # Calculating the insurance fee
-        insurance_fee = markup_price * self.insurance_rate * warranty_yrs if insurance == 'Yes' else 0
+        insurance_fee = markup_price * self.insurance_rate * (warranty_yrs + additional_warranty) if insurance == 'Yes' else 0
         
         # Travel labor cost
         travel_labor_cost = self.travel_labor_cost
@@ -103,9 +105,11 @@ class Calculator():
         
         # Define monthly interest rate
         monthly_interest_rate = ((1+self.cpi)**(1/12))-1
+        print(monthly_interest_rate)
         
         # Calculate the LoanTerm in months (can be decimal)
         LoanTerm_months = npf.nper(monthly_interest_rate, -monthlyPayment, total_payment, 1)
+        print(LoanTerm_months)
         
         # total_payment_pv = npf.pv(monthly_interest_rate, LoanTerm_months, -monthlyPayment, -1)
         
@@ -136,7 +140,8 @@ class Calculator():
             "maintenance_fee": maintenance_fee,
             "warranty_fee": warranty_fee,
             "insurance_fee": insurance_fee,
-            "terminal_value": terminal_value,
+            "terminal_value_fee": terminal_value,
+            "business_con_fee": business_con_fee,
         }
 
         return results
@@ -174,21 +179,22 @@ products = df[df['Product Name'].str.contains(r'[a-zA-Z]', na=False)]['Product N
 product_list = ['Others']
 product_list.extend(products.tolist()) 
 
-selected_product = st.selectbox('Choose Product', product_list, placeholder="Select product")
-price = 0
+with st.expander('Product Selection', expanded=True):
+    selected_product = st.selectbox('Choose Product', product_list, placeholder="Select product")
+    price = 0
 
-if selected_product != 'Others':
-    types = df[df['Product Name'] == selected_product]['Type'].dropna().unique().tolist()
-    selected_type = st.selectbox('Choose Product Type', types)
-    if selected_type:
-        price = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Price'].iloc[0] 
-        price = round(price * (1+Calculator().markup_percentage))
+    if selected_product != 'Others':
+        types = df[df['Product Name'] == selected_product]['Type'].dropna().unique().tolist()
+        selected_type = st.selectbox('Choose Product Type', types)
+        if selected_type:
+            price = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Price'].iloc[0] 
+            price = round(price * (1+Calculator().markup_percentage))
+        else:
+            price = df.loc[df['Product Name'] == selected_product, 'Price'].iloc[0]
+            price = round(price * (1+Calculator().markup_percentage))
     else:
-        price = df.loc[df['Product Name'] == selected_product, 'Price'].iloc[0]
-        price = round(price * (1+Calculator().markup_percentage))
-else:
-    selected_product = None
-    selected_type = None
+        selected_product = None
+        selected_type = None
 
 with st.expander('Loan Scheme', expanded=True):
     # Scheme selectbox outside the form
@@ -242,6 +248,8 @@ with st.form(key='myform'):
             warranty_fee = main_results['warranty_fee']
             maintenance_fee = main_results['maintenance_fee']
             insurance_fee = main_results['insurance_fee']
+            business_con_fee = main_results['business_con_fee']
+            terminal_value_fee = main_results['terminal_value_fee']
             
         elif Scheme == 'Suggest your Maximum Monthly Rate':
             main_results = calculator.getLoanTerm(EquipmentPriceVar, MaximumMonthly, terminal_rate, insurance_opt_in, Maintenance, ExtraWarranty, BusinessCon)
@@ -252,6 +260,8 @@ with st.form(key='myform'):
             insurance_fee = main_results['insurance_fee']
             LoanTermVar = main_results['LoanTerm_years']
             last_monthlyPayment = main_results['last_monthlyPayment']
+            business_con_fee = main_results['business_con_fee']
+            terminal_value_fee = main_results['terminal_value_fee']
 
         st.session_state.invoice = format(invoice, '10.2f')
         st.session_state.repayment = format(monthlyPayment, '10.2f')
@@ -295,6 +305,20 @@ with st.form(key='myform'):
             with res6:
                 st.markdown("Insurance Fee ($)")
                 st.write(f"### {format(insurance_fee, '10.2f')}")
+                
+            res7, res8, res9 = st.columns([1, 1, 1])
+            
+            with res7:
+                st.markdown("Terminal Value Fee ($)")
+                st.write(f"### {format(main_results['terminal_value_fee'], '10.2f')}")
+                
+            with res8:
+                st.markdown("Travel Labor Cost ($)")
+                st.write(f"### {format(calculator.travel_labor_cost, '10.2f')}")
+                
+            with res9:
+                st.markdown("Business Continuity Fee ($)")
+                st.write(f"### {format(main_results['business_con_fee'], '10.2f')}")
 
         
 
