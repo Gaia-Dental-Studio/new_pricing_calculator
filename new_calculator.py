@@ -40,7 +40,7 @@ class Calculator():
         self.invoice = None
 
     def getMonthlyPayment(self, EquipmentPrice, LoanTerm, terminal_rate, insurance='Yes', maintenance='Yes', extra_warranty=0, bussiness_con='Yes'): 
-        markup_price = EquipmentPrice + (EquipmentPrice * self.markup_percentage)
+        markup_price = EquipmentPrice # as it has been mark upped in the input form
         maintenance_fee = (markup_price * self.maintenance_ratio if markup_price > 2500 else 0) if maintenance == 'Yes' else 0 
         warranty_yrs = 1 if markup_price < 2000 else 2 if markup_price < 5000 else 3 if markup_price < 10000 else 5
         additional_warranty = extra_warranty
@@ -54,7 +54,7 @@ class Calculator():
         total_payment = total_before_travel_labor + travel_labor_cost
         
         monthly_interest_rate = ((1+self.cpi)**(1/12))-1
-        monthlyPayment = npf.pmt(monthly_interest_rate, LoanTerm*12, -total_payment,1)
+        monthlyPayment = npf.pmt(monthly_interest_rate, LoanTerm*12, -total_payment)
 
         self.monthlyPayment = monthlyPayment
         
@@ -73,7 +73,7 @@ class Calculator():
     
     def getLoanTerm(self, EquipmentPrice, monthlyPayment, terminal_rate, insurance='Yes', maintenance='Yes', extra_warranty=0, bussiness_con='Yes'): 
         # Calculating the markup price
-        markup_price = EquipmentPrice + (EquipmentPrice * self.markup_percentage)
+        markup_price = EquipmentPrice # as it has been mark upped in the input form
         
         # Calculating the maintenance fee
         maintenance_fee = (markup_price * self.maintenance_ratio if markup_price > 2500 else 0) if maintenance == 'Yes' else 0 
@@ -95,7 +95,7 @@ class Calculator():
         terminal_value = markup_price * terminal_rate
         
         # Calculating the business continuity fee
-        business_con_fee = markup_price * self.business_con_rate if bussiness_con == 'Yes' else 0
+        business_con_fee = markup_price * self.business_con_rate * (warranty_yrs + additional_warranty) if bussiness_con == 'Yes' else 0
         
         # Total before adding terminal value
         total_before_terminal = markup_price + maintenance_fee + warranty_fee + insurance_fee + business_con_fee
@@ -182,6 +182,7 @@ product_list.extend(products.tolist())
 with st.expander('Product Selection', expanded=True):
     selected_product = st.selectbox('Choose Product', product_list, placeholder="Select product")
     price = 0
+    warranty = 0
 
     if selected_product != 'Others':
         types = df[df['Product Name'] == selected_product]['Type'].dropna().unique().tolist()
@@ -189,9 +190,11 @@ with st.expander('Product Selection', expanded=True):
         if selected_type:
             price = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Price'].iloc[0] 
             price = round(price * (1+Calculator().markup_percentage))
+            warranty = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Warranty (years)'].iloc[0]
         else:
             price = df.loc[df['Product Name'] == selected_product, 'Price'].iloc[0]
             price = round(price * (1+Calculator().markup_percentage))
+            warranty = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Warranty (years)'].iloc[0]
     else:
         selected_product = None
         selected_type = None
@@ -201,7 +204,7 @@ with st.expander('Loan Scheme', expanded=True):
     Scheme = st.selectbox("Choose Loan Scheme", ('By Loan Term', 'Suggest your Maximum Monthly Rate'), index=0)
     # Add the logic to display text based on the selected scheme
     if Scheme == 'By Loan Term':
-        LoanTermVar = st.number_input("Loan Term (Years)", step=1, value=1)
+        LoanTermVar = st.number_input("Loan Term (Years)", step=1, value=warranty)
     elif Scheme == 'Suggest your Maximum Monthly Rate':
         MaximumMonthly = st.slider(label='Maximum Monthly Rate ($)',min_value=100, max_value=2000, value=500, step = 50)
         

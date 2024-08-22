@@ -43,7 +43,7 @@ class Multiproduct_Calculator():
         return round(EquipmentPrice + (EquipmentPrice * self.markup_percentage))
 
     def getPayment_NoTravel(self, EquipmentPrice, LoanTerm, terminal_rate, insurance='Yes', maintenance='Yes', extra_warranty=0, bussiness_con='Yes'): 
-        markup_price = self.getMarkup_Price(EquipmentPrice)
+        markup_price = EquipmentPrice # as it has been mark upped in the input form
         maintenance_fee = markup_price * self.maintenance_ratio if maintenance == 'Yes' and markup_price > 2500 else 0 
         warranty_yrs = 1 if markup_price < 2000 else 2 if markup_price < 5000 else 3 if markup_price < 10000 else 5
         warranty_fee = markup_price * self.warranty_rate * (warranty_yrs + extra_warranty)
@@ -75,7 +75,7 @@ class Multiproduct_Calculator():
     def getPayment_NoTravel_MaxPayScheme(self, EquipmentPrice, terminal_rate, insurance='Yes', maintenance='Yes', extra_warranty=0, business_con='Yes'):
         
         # Calculate the markup price
-        markup_price = self.getMarkup_Price(EquipmentPrice)
+        markup_price = EquipmentPrice # as it has been mark upped in the input form
         
         # # Initial calculation with LoanTerm set to 1 year
         # initial_loan_term_years = 1
@@ -244,13 +244,14 @@ with st.form(key='myform'):
         
         if Scheme == 'By Loan Term':
             calculator = Multiproduct_Calculator()
-            markup_price = calculator.getMarkup_Price(EquipmentPriceVar)
+            markup_price = EquipmentPriceVar # as it has been mark upped in the input form
+            print(markup_price)
             price_with_package = calculator.getPayment_NoTravel(EquipmentPriceVar, LoanTermVar, terminal_rate, insurance_opt_in, maintenance_opt_in, extra_warranty, business_con_opt_in)
 
             
         elif Scheme == 'Suggest your Maximum Monthly Rate':
             calculator = Multiproduct_Calculator()
-            markup_price = calculator.getMarkup_Price(EquipmentPriceVar)
+            markup_price = EquipmentPriceVar # as it has been mark upped in the input form
             pre_price_with_package = calculator.getPayment_NoTravel_MaxPayScheme(EquipmentPriceVar, terminal_rate, insurance_opt_in, maintenance_opt_in, extra_warranty, business_con_opt_in)
             st.session_state.pre_result.append(pre_price_with_package)
             
