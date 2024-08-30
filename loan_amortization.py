@@ -89,7 +89,7 @@ def loan_amortization(principal, annual_rate, loan_term_years):
 
     # Update layout for the pie chart
     fig2.update_layout(
-        title='Proportion of Total Principal and Interest Payments'
+        title='Principal-Interest Ratio'
     )
 
     # Return a dictionary containing both figures
@@ -202,7 +202,7 @@ def loan_amortization_custom_payment(principal, annual_rate, monthly_payment):
 
     # Update layout for the pie chart
     fig2.update_layout(
-        title='Proportion of Total Principal and Interest Payments'
+        title='Principal-Interest Ratio'
     )
 
     # Return a dictionary containing both figures
