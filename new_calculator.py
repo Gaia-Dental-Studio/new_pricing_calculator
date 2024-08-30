@@ -8,6 +8,7 @@ import numpy as np
 import numpy_financial as npf
 import requests
 import math
+from loan_amortization import loan_amortization, loan_amortization_custom_payment
 
 class Calculator():
     def __init__(self):
@@ -20,6 +21,8 @@ class Calculator():
         self.insurance_rate = 0.015
         self.travel_labor_cost = 300
         self.business_con_rate = 0.02
+        self.monthly_interest_rate = self.cpi/12
+        # self.monthly_interest_rate = ((1+self.cpi)**(1/12))-1
         
         # UNCOMMENT THIS IF FLASK CONNECTION IS WORKING
         # response = requests.get("http://127.0.0.1:5000/get_parameters")
@@ -53,7 +56,8 @@ class Calculator():
         total_before_travel_labor = markup_price + maintenance_fee + warranty_fee + insurance_fee + business_con_fee + terminal_value
         total_payment = total_before_travel_labor + travel_labor_cost
         
-        monthly_interest_rate = ((1+self.cpi)**(1/12))-1
+        monthly_interest_rate = self.monthly_interest_rate
+
         monthlyPayment = npf.pmt(monthly_interest_rate, LoanTerm*12, -total_payment)
 
         self.monthlyPayment = monthlyPayment
@@ -104,7 +108,7 @@ class Calculator():
         total_payment = total_before_terminal + terminal_value + travel_labor_cost
         
         # Define monthly interest rate
-        monthly_interest_rate = ((1+self.cpi)**(1/12))-1
+        monthly_interest_rate = self.monthly_interest_rate
         print(monthly_interest_rate)
         
         # Calculate the LoanTerm in months (can be decimal)
@@ -194,7 +198,7 @@ with st.expander('Product Selection', expanded=True):
         else:
             price = df.loc[df['Product Name'] == selected_product, 'Price'].iloc[0]
             price = round(price * (1+Calculator().markup_percentage))
-            warranty = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Warranty (years)'].iloc[0]
+            warranty = df.loc[(df['Product Name'] == selected_product), 'Warranty (years)'].iloc[0]
     else:
         selected_product = None
         selected_type = None
@@ -323,5 +327,15 @@ with st.form(key='myform'):
                 st.markdown("Business Continuity Fee ($)")
                 st.write(f"### {format(main_results['business_con_fee'], '10.2f')}")
 
+        if Scheme == "By Loan Term":
+            viz_model = loan_amortization(invoice, calculator.cpi, LoanTermVar)
+            plot = viz_model['amortization_schedule'] 
+            piechart = viz_model['proportion_pie_chart']
+        elif Scheme == "Suggest your Maximum Monthly Rate":
+            viz_model = loan_amortization_custom_payment(invoice, calculator.cpi, monthlyPayment)
+            plot = viz_model['amortization_schedule']
+            piechart = viz_model['proportion_pie_chart']
         
-
+        st.plotly_chart(piechart)    
+            
+        st.plotly_chart(plot)

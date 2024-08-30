@@ -8,6 +8,7 @@ import numpy as np
 import numpy_financial as npf
 import requests
 import math
+from loan_amortization import *
 
 class Multiproduct_Calculator():
     def __init__(self):
@@ -350,3 +351,16 @@ if st.button("Get Total"):
         html_table = create_merged_html(basket_df, total_after_travel_labor, monthlyPayment, loan_term_display, last_monthlyPayment)
         st.markdown(html_table, unsafe_allow_html=True)
         # st.caption("Note: The Monthly Repayment will be paid for the entire Loan Term (in months), not just for the warranty period.")
+
+        if Scheme == "By Loan Term":
+            viz_model = loan_amortization(total_after_travel_labor, calculator.cpi, LoanTermVar)
+            plot = viz_model['amortization_schedule'] 
+            piechart = viz_model['proportion_pie_chart']
+        elif Scheme == "Suggest your Maximum Monthly Rate":
+            viz_model = loan_amortization_custom_payment(total_after_travel_labor, calculator.cpi, monthlyPayment)
+            plot = viz_model['amortization_schedule']
+            piechart = viz_model['proportion_pie_chart']
+        
+        st.plotly_chart(piechart)    
+            
+        st.plotly_chart(plot)
