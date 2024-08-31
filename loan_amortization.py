@@ -210,3 +210,122 @@ def loan_amortization_custom_payment(principal, annual_rate, monthly_payment):
         'amortization_schedule': fig1,
         'proportion_pie_chart': fig2
     }
+
+
+def detailed_piechart(principal, equipmentPrice, annual_rate, loan_term_years):
+    """
+    Function to calculate loan amortization schedule and return a Plotly figure with interactive buttons
+    to switch between different pie chart representations.
+    
+    Parameters:
+    principal (float): Principal loan amount.
+    equipmentPrice (float): Equipment price.
+    annual_rate (float): Annual interest rate in percent.
+    loan_term_years (int): Loan term in years.
+
+    Returns:
+    go.Figure: A Plotly figure object with interactive pie charts.
+    """
+    # Convert APR to a monthly interest rate
+    monthly_rate = annual_rate / 12  # Convert percentage to decimal and divide by 12 for monthly rate
+    total_payments = loan_term_years * 12  # Total number of monthly payments
+
+    # Calculate fixed monthly payment
+    monthly_payment = npf.pmt(rate=monthly_rate, nper=total_payments, pv=-principal)
+
+    # Initialize list for storing results
+    ratios = []
+
+    # Calculate interest and principal portions for each month
+    for month in range(1, total_payments + 1):
+        interest_payment = npf.ipmt(rate=monthly_rate, per=month, nper=total_payments, pv=-principal)
+        principal_payment = npf.ppmt(rate=monthly_rate, per=month, nper=total_payments, pv=-principal)
+        ratios.append({
+            'Month': month,
+            'Interest Payment': interest_payment,
+            'Principal Payment': principal_payment
+        })
+
+    # Create DataFrame
+    df = pd.DataFrame(ratios)
+
+    # Calculate total interest paid over the loan term
+    total_interest = df['Interest Payment'].sum()
+
+    # Calculate the profit of the finance product
+    finance_product_profit = principal - equipmentPrice
+
+    # Define color palettes
+    colors_three_portions = ['#9ecae1', '#fdd0a2', '#c6dbef']  # Three-portion view colors
+    colors_combined = ['#9ecae1', '#a1d99b']  # Combined view colors with distinct color for Total Principal
+
+    # Prepare data for the first pie chart (three portions)
+    labels1 = ['Total Interest', 'Equipment Price', 'Finance Product Profit']
+    values1 = [round(total_interest, 2), round(equipmentPrice, 2), round(finance_product_profit, 2)]
+
+    # Prepare data for the second pie chart (two portions)
+    labels2 = ['Total Interest', 'Total Principal']
+    values2 = [round(total_interest, 2), round(principal, 2)]
+
+    # Create initial pie chart using Plotly with custom colors
+    fig = go.Figure()
+
+    # Add first pie chart (three portions)
+    fig.add_trace(go.Pie(
+        labels=labels1,
+        values=values1,
+        hoverinfo='label+percent+value', 
+        textinfo='label+value',
+        hole=0.3,
+        marker=dict(colors=colors_three_portions),
+        sort=False,  # Keep slice order consistent
+        rotation=90  # Set starting angle to align the "Total Interest" slice
+    ))
+
+    # Add second pie chart (two portions, hidden by default)
+    fig.add_trace(go.Pie(
+        labels=labels2,
+        values=values2,
+        hoverinfo='label+percent+value', 
+        textinfo='label+value',
+        hole=0.3,
+        marker=dict(colors=colors_combined),  # Use distinct color for "Total Principal"
+        sort=False,  # Keep slice order consistent
+        rotation=90  # Set starting angle to align the "Total Interest" slice
+    ))
+
+    # Update layout to add buttons
+    fig.update_layout(
+        title='Breakdown of Loan Costs',
+        updatemenus=[
+            dict(
+                type="buttons",
+                direction="down",  # Change direction to 'down' to stack buttons vertically
+                x=1.35,  # Position to the right of the legend
+                y=1.1,  # Center vertically below the legend
+                showactive=True,
+                buttons=list([
+                    dict(label="Show Three Portions",
+                        method="update",
+                        args=[{"visible": [True, False]},  # Show first pie, hide second
+                            {"title": "Breakdown of Loan Costs: Three Portions"}]),
+                    dict(label="Show Combined Principal",
+                        method="update",
+                        args=[{"visible": [False, True]},  # Hide first pie, show second
+                            {"title": "Breakdown of Loan Costs: Combined Principal"}]),
+                ]),
+                pad={"r": 10, "t": 10},  # Padding to adjust space around buttons
+                font={"size": 10}  # Smaller font size for buttons
+            )
+        ],
+        legend=dict(
+            x=1.05,  # Position the legend slightly left of the buttons
+            y=0.5,
+            traceorder='normal',
+            font=dict(size=10),
+        )
+    )
+
+    return fig
+
+    

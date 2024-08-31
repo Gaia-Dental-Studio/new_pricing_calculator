@@ -8,7 +8,7 @@ import numpy as np
 import numpy_financial as npf
 import requests
 import math
-from loan_amortization import loan_amortization, loan_amortization_custom_payment
+from loan_amortization import loan_amortization, loan_amortization_custom_payment, detailed_piechart
 from single_calculator import Calculator
 import json
 import pickle
@@ -194,12 +194,15 @@ with st.form(key='myform'):
             viz_model = loan_amortization(invoice, calculator.cpi, LoanTermVar)
             plot = viz_model['amortization_schedule'] 
             piechart = viz_model['proportion_pie_chart']
+            new_pie = detailed_piechart(invoice, EquipmentPriceVar, calculator.cpi, LoanTermVar)
         elif Scheme == "Suggest your Maximum Monthly Rate":
             viz_model = loan_amortization_custom_payment(invoice, calculator.cpi, monthlyPayment)
             plot = viz_model['amortization_schedule']
             piechart = viz_model['proportion_pie_chart']
         
-        st.plotly_chart(piechart)    
+        st.plotly_chart(piechart)
+        st.plotly_chart(new_pie)
+            
             
         st.plotly_chart(plot)
         

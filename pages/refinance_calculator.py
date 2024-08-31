@@ -195,9 +195,9 @@ else:
         elif warranty == 2:
             return 1
         elif warranty == 3:
-            return 2
+            return 1
         elif warranty >= 4:
-            return 2
+            return 1
 
     with st.form(key='myform'):
         with st.expander("Additioal Package Customization", expanded=True):
@@ -206,12 +206,12 @@ else:
             with col1:
                 EquipmentPriceVar = st.number_input("Equipment Cost ($)", step=1, value=price, disabled=True)
                 Maintenance = st.selectbox("Maintenance Opt in", ('Yes', 'No'))
-                terminal_rate = st.number_input("Terminal Rate (%)", step=0.01, value=0.00)
+                terminal_rate = st.number_input("Terminal Rate (%)", step=0.01, value=0.00, disabled=True)
 
             with col2:
                 insurance_opt_in = st.selectbox("Insurance Opt in", ('Yes', 'No'))
-                ExtraWarranty = st.number_input("Extra Warranty (Years)", step=1, value=0, max_value=max_extra_warranty(warranty), help = "Consider refinancing equipment for further extra warranty")
-                BusinessCon = st.selectbox("Business Continuity Opt in", ('Yes', 'No'))
+                ExtraWarranty = st.number_input("Extra Warranty (Years)", step=1, value=0, max_value=max_extra_warranty(warranty), help = "Limited warranty extension for secondhand  equipment")
+                BusinessCon = st.selectbox("Business Continuity Opt in", ('Yes', 'No'), index=1, disabled=True)
                 
 
         if not EquipmentPriceVar: EquipmentPriceVar = 0
