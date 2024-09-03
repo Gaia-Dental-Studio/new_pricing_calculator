@@ -27,18 +27,18 @@ class Calculator():
         # self.monthly_interest_rate = ((1+self.cpi)**(1/12))-1
         
         # UNCOMMENT THIS IF FLASK CONNECTION IS WORKING
-        # response = requests.get("http://127.0.0.1:5000/get_parameters")
-        # if response.status_code == 200:
-        #     params = response.json()
-        #     self.cpi = params['cpi']
-        #     self.markup_percentage = params['markup_percentage']
-        #     self.maintenance_ratio = params['maintenance_ratio']
-        #     self.warranty_rate = params['warranty_rate']
-        #     self.insurance_rate = params['insurance_rate']
-        #     self.travel_labor_cost = params['travel_labor_cost']
-        #     self.business_con_rate = params['business_con_rate']
-        # else:
-        #     st.error("Failed to load parameters!")
+        response = requests.get("http://127.0.0.1:5000/get_parameters")
+        if response.status_code == 200:
+            params = response.json()
+            self.cpi = params['cpi']
+            self.markup_percentage = params['markup_percentage']
+            self.maintenance_ratio = params['maintenance_ratio']
+            self.warranty_rate = params['warranty_rate']
+            self.insurance_rate = params['insurance_rate']
+            self.travel_labor_cost = params['travel_labor_cost']
+            self.business_con_rate = params['business_con_rate']
+        else:
+            st.error("Failed to load parameters!")
         self.name = None
         self.monthlyPayment = None
         self.totalPayment = None
@@ -47,7 +47,7 @@ class Calculator():
     def getMonthlyPayment(self, EquipmentPrice, LoanTerm, terminal_rate, insurance='Yes', maintenance='Yes', extra_warranty=0, bussiness_con='Yes'): 
         markup_price = EquipmentPrice # as it has been mark upped in the input form
         maintenance_fee = (markup_price * self.maintenance_ratio if markup_price > 2500 else 0) if maintenance == 'Yes' else 0 
-        warranty_yrs = 1 if markup_price < 2000 else 2 if markup_price < 5000 else 3 if markup_price < 10000 else 5
+        warranty_yrs = 1 if markup_price <= 2000 else 2 if markup_price <= 5000 else 3 if markup_price <= 10000 else 5 if markup_price <= 30000 else 10
         additional_warranty = extra_warranty
         warranty_fee = markup_price * self.warranty_rate * (warranty_yrs + additional_warranty)
         insurance_fee = markup_price * self.insurance_rate * (warranty_yrs + additional_warranty) if insurance == 'Yes' else 0
@@ -85,7 +85,7 @@ class Calculator():
         maintenance_fee = (markup_price * self.maintenance_ratio if markup_price > 2500 else 0) if maintenance == 'Yes' else 0 
         
         # Determining the warranty years based on markup price
-        warranty_yrs = 1 if markup_price < 2000 else 2 if markup_price < 5000 else 3 if markup_price < 10000 else 5
+        warranty_yrs = 1 if markup_price <= 2000 else 2 if markup_price <= 5000 else 3 if markup_price <= 10000 else 5 if markup_price <= 30000 else 10
         
         # Calculating the warranty fee
         additional_warranty = extra_warranty

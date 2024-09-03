@@ -10,13 +10,13 @@ st.markdown("This interface is only visible for internals. Not for public/client
 # Initialize session state for all parameters if not already done
 if 'parameters' not in st.session_state:
     st.session_state.parameters = {
-        'cpi': 0.12,
-        'markup_percentage': 0.001,
-        'maintenance_ratio': 0.08,
-        'warranty_rate': 0.05,
-        'insurance_rate': 0.015,
+        'cpi': 0.10,
+        'markup_percentage': 0.00,
+        'maintenance_ratio': 0.01,
+        'warranty_rate': 0.01,
+        'insurance_rate': 0.01,
         'travel_labor_cost': 300,
-        'business_con_rate': 0.02
+        'business_con_rate': 0.01
     }
 
 # Create columns for input fields
@@ -40,17 +40,17 @@ st.markdown("---")
 if st.button("Save Parameters"):
     
     # COMMENT THIS IF FLASK CONNECTION IS NOT WORKING
-    st.success("Parameters are not updated since Flask is not running for now!")
+    # st.success("Parameters are not updated since Flask is not running for now!")
     
     # UNCOMMENT THIS IF FLASK CONNECTION IS WORKING
-    # try:
-    #     response = requests.post("http://127.0.0.1:5000/set_parameters", json=st.session_state.parameters)
-    #     if response.status_code == 200:
-    #         st.success("Parameters saved successfully!")
-    #     else:
-    #         st.error("Failed to save parameters!")
-    # except Exception as e:
-    #     st.error(f"Error: {e}")
+    try:
+        response = requests.post("http://127.0.0.1:5000/set_parameters", json=st.session_state.parameters)
+        if response.status_code == 200:
+            st.success("Parameters saved successfully!")
+        else:
+            st.error("Failed to save parameters!")
+    except Exception as e:
+        st.error(f"Error: {e}")
 
 # Display the current values
 st.markdown("### Current Parameter Values:")

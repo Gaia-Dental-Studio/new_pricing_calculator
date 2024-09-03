@@ -329,3 +329,101 @@ def detailed_piechart(principal, equipmentPrice, annual_rate, loan_term_years):
     return fig
 
     
+    
+    
+    
+def loan_amortization_df_only(principal, annual_rate, loan_term_years):
+    """
+    Function to calculate loan amortization schedule and return a dictionary of Plotly figures.
+    
+    Parameters:
+    principal (float): Principal loan amount.
+    annual_rate (float): Annual interest rate in percent.
+    loan_term_years (int): Loan term in years.
+
+    Returns:
+    dict: A dictionary containing Plotly figure objects for the loan amortization schedule.
+    """
+    # Convert APR to a monthly interest rate
+    monthly_rate = annual_rate / 12  # Convert percentage to decimal and divide by 12 for monthly rate
+    total_payments = loan_term_years * 12  # Total number of monthly payments
+
+    # Calculate fixed monthly payment
+    monthly_payment = npf.pmt(rate=monthly_rate, nper=total_payments, pv=-principal)
+
+    # Initialize list for storing results
+    ratios = []
+    remaining_principal = principal
+
+    # Calculate interest, principal portions, and remaining principal for each month
+    for month in range(1, total_payments + 1):
+        interest_payment = npf.ipmt(rate=monthly_rate, per=month, nper=total_payments, pv=-principal)
+        principal_payment = npf.ppmt(rate=monthly_rate, per=month, nper=total_payments, pv=-principal)
+        remaining_principal -= principal_payment  # Subtract principal payment to get remaining principal
+        
+        ratios.append({
+            'Month': month,
+            'Interest Payment': interest_payment,
+            'Principal Payment': principal_payment,
+            'Remaining Principal': remaining_principal
+        })
+
+    # Create DataFrame
+    df = pd.DataFrame(ratios)
+    
+    return df
+
+
+def loan_amortization_custom_payment_df_only(principal, annual_rate, monthly_payment):
+    """
+    Function to calculate loan amortization schedule based on a fixed monthly payment 
+    and return a dictionary of Plotly figures.
+
+    Parameters:
+    principal (float): Principal loan amount.
+    annual_rate (float): Annual interest rate in percent.
+    monthly_payment (float): Fixed monthly payment.
+
+    Returns:
+    dict: A dictionary containing Plotly figure objects for the loan amortization schedule and pie chart.
+    """
+    # Convert APR to a monthly interest rate
+    monthly_rate = annual_rate / 12  # Convert percentage to decimal and divide by 12 for monthly rate
+
+    # Calculate the loan term in months (can be a decimal)
+    loan_term_months = npf.nper(rate=monthly_rate, pmt=-monthly_payment, pv=principal)
+    
+    # Round up to the nearest whole number of months
+    loan_term_months_rounded = math.ceil(loan_term_months)
+
+    # Calculate the remaining balance after making loan_term_months_rounded - 1 payments
+    remaining_balance = npf.fv(rate=monthly_rate, nper=loan_term_months_rounded - 1, pmt=-monthly_payment, pv=principal)
+    
+    # Calculate the final payment to settle the remaining balance
+    final_payment = -(remaining_balance * (1 + monthly_rate))
+
+    # Initialize list for storing results
+    ratios = []
+
+    # Calculate interest and principal portions for each month
+    for month in range(1, loan_term_months_rounded + 1):
+        if month == loan_term_months_rounded:
+            # Use the final payment for the last month
+            interest_payment = npf.ipmt(rate=monthly_rate, per=month, nper=loan_term_months_rounded, pv=-principal)
+            principal_payment = final_payment - interest_payment
+        else:
+            interest_payment = npf.ipmt(rate=monthly_rate, per=month, nper=loan_term_months_rounded, pv=-principal)
+            principal_payment = monthly_payment - interest_payment
+        
+        # Append results for each month
+        ratios.append({
+            'Month': month,
+            'Interest Payment': interest_payment,
+            'Principal Payment': principal_payment,
+            'Total Payment': principal_payment + interest_payment
+        })
+
+    # Create DataFrame
+    df = pd.DataFrame(ratios)
+    
+    return df
