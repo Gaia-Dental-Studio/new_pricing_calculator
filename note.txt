@@ -1,0 +1,5 @@
+To Do List:
+
+- Fix Travel cost for Loan Scheme 2
+- Adjust the loan_amortization.py to have total remaining principle for all methods
+- Adjust set parameter page to have same editorial like in new calculator

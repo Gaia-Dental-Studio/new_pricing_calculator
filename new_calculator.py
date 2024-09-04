@@ -12,7 +12,7 @@ from loan_amortization import loan_amortization, loan_amortization_custom_paymen
 from single_calculator import Calculator
 import json
 import pickle
-
+from parameter import *
 
 # Set up the page
 st.set_page_config(page_title="Calculator")
@@ -37,18 +37,35 @@ if 'parameters' not in st.session_state:
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.session_state.parameters['cpi'] = st.number_input("Interest Rate (%)", step=1, value=round(st.session_state.parameters['cpi']*100))
-    st.session_state.parameters['cpi'] = st.session_state.parameters['cpi']/100
-    st.session_state.parameters['warranty_rate'] = st.number_input("Warranty Rate", step=0.01, value=st.session_state.parameters['warranty_rate'])
-    st.session_state.parameters['business_con_rate'] = st.number_input("Business Continuity Rate", step=0.01, value=st.session_state.parameters['business_con_rate'])
+    st.session_state.parameters['cpi'] = st.number_input(
+        "Interest Rate (%)", step=1, value=round(st.session_state.parameters['cpi'] * 100))
+    st.session_state.parameters['cpi'] = st.session_state.parameters['cpi'] / 100
+
+    st.session_state.parameters['warranty_rate'] = st.number_input(
+        "Warranty Rate (%)", step=1, value=round(st.session_state.parameters['warranty_rate'] * 100))
+    st.session_state.parameters['warranty_rate'] = st.session_state.parameters['warranty_rate'] / 100
+
+    st.session_state.parameters['business_con_rate'] = st.number_input(
+        "Business Continuity Rate (%)", step=1, value=round(st.session_state.parameters['business_con_rate'] * 100))
+    st.session_state.parameters['business_con_rate'] = st.session_state.parameters['business_con_rate'] / 100
 
 with col2:
-    st.session_state.parameters['markup_percentage'] = st.number_input("Markup Percentage", step=0.0001, value=st.session_state.parameters['markup_percentage'])
-    st.session_state.parameters['insurance_rate'] = st.number_input("Insurance Rate", step=0.01, value=st.session_state.parameters['insurance_rate'])
+    st.session_state.parameters['markup_percentage'] = st.number_input(
+        "Markup Percentage (%)", step=1, value=round(st.session_state.parameters['markup_percentage'] * 100))
+    st.session_state.parameters['markup_percentage'] = st.session_state.parameters['markup_percentage'] / 100
+
+    st.session_state.parameters['insurance_rate'] = st.number_input(
+        "Insurance Rate (%)", step=1, value=round(st.session_state.parameters['insurance_rate'] * 100))
+    st.session_state.parameters['insurance_rate'] = st.session_state.parameters['insurance_rate'] / 100
 
 with col3:
-    st.session_state.parameters['maintenance_ratio'] = st.number_input("Maintenance Ratio", step=0.01, value=st.session_state.parameters['maintenance_ratio'])
-    st.session_state.parameters['travel_labor_cost'] = st.number_input("Travel Labor Cost ($)", step=1, value=st.session_state.parameters['travel_labor_cost'])
+    st.session_state.parameters['maintenance_ratio'] = st.number_input(
+        "Maintenance Ratio (%)", step=1, value=round(st.session_state.parameters['maintenance_ratio'] * 100))
+    st.session_state.parameters['maintenance_ratio'] = st.session_state.parameters['maintenance_ratio'] / 100
+
+    st.session_state.parameters['travel_labor_cost'] = st.number_input(
+        "Travel Labor Cost ($)", step=1, value=st.session_state.parameters['travel_labor_cost'])
+
 
 # Save the parameters and send to Flask server
 st.markdown("---")
@@ -114,6 +131,7 @@ with st.expander('Product Selection', expanded=True):
     else:
         selected_product = None
         selected_type = None
+        warranty = st.number_input("Warranty (Years)", step=1, value=1)
 
 with st.expander('Loan Scheme', expanded=True):
     # Scheme selectbox outside the form
@@ -138,18 +156,22 @@ def max_extra_warranty(warranty):
         return 2
 
 with st.form(key='myform'):
-    with st.expander("Additioal Package Customization", expanded=True):
+    with st.expander("Additional Package Customization", expanded=True):
         col1, col2 = st.columns(2)
 
         with col1:
             EquipmentPriceVar = st.number_input("Equipment Cost ($)", step=1, value=price, disabled=False)
-            Maintenance = st.selectbox("Maintenance Opt in", ('Yes', 'No'))
+            Maintenance = st.selectbox("Maintenance Opt Out", ('Yes', 'No'))
             terminal_rate = st.number_input("Terminal Rate (%)", step=0.01, value=0.00)
 
         with col2:
-            insurance_opt_in = st.selectbox("Insurance Opt in", ('Yes', 'No'))
+            insurance_opt_in = st.selectbox("Insurance Opt Out", ('Yes', 'No'))
             ExtraWarranty = st.number_input("Extra Warranty (Years)", step=1, value=0, max_value=max_extra_warranty(warranty), help = "Consider refinancing equipment for further extra warranty")
-            BusinessCon = st.selectbox("Business Continuity Opt in", ('Yes', 'No'))
+            
+            if insurance_opt_in == 'No':
+                BusinessCon = st.selectbox("Business Continuity Opt Out", ('Yes', 'No'), index=1, disabled=True)
+            else:
+                BusinessCon = st.selectbox("Business Continuity Opt Out", ('Yes', 'No'))
             
 
     if not EquipmentPriceVar: EquipmentPriceVar = 0
@@ -171,6 +193,10 @@ with st.form(key='myform'):
         calculator = Calculator()
         
         
+
+        # updateParameters(calculator, EquipmentPriceVar, warranty, terminal_rate)
+
+        
         if Scheme == 'By Loan Term':
             
             st.session_state.user_parameters = {
@@ -180,13 +206,21 @@ with st.form(key='myform'):
                 'ExtraWarranty' : ExtraWarranty,
                 'BusinessCon' : BusinessCon,
                 'LoanTermVar' : LoanTermVar,
-                'EquipmentPriceVar' : EquipmentPriceVar
+                'EquipmentPriceVar' : EquipmentPriceVar,
+                'FreeWarranty': warranty
             }
+            print(warranty)
+            user_parameters = st.session_state.user_parameters
+
+            # Converting int64 to int
+            for key, value in user_parameters.items():
+                if isinstance(value, np.int64):
+                    user_parameters[key] = int(value)
             
-            push = requests.post("http://127.0.0.1:5000/set_user_parameters_scheme_1", json=st.session_state.user_parameters)
+            response = requests.post("http://127.0.0.1:5000/set_user_parameters_scheme_1", json=user_parameters)
             
             
-            response = requests.get("http://127.0.0.1:5000/get_calculation_scheme_1")
+            # response = requests.get("http://127.0.0.1:5000/get_calculation_scheme_1")
         
             main_results = response.json()
             
@@ -210,9 +244,9 @@ with st.form(key='myform'):
                 'EquipmentPriceVar' : EquipmentPriceVar
             }
             
-            push = requests.post("http://127.0.0.1:5000/set_user_parameters_scheme_2", json=st.session_state.user_parameters)
+            response = requests.post("http://127.0.0.1:5000/set_user_parameters_scheme_2", json=st.session_state.user_parameters)
             
-            response = requests.get("http://127.0.0.1:5000/get_calculation_scheme_2")
+            # response = requests.get("http://127.0.0.1:5000/get_calculation_scheme_2")
             
             # main_results = calculator.getLoanTerm(EquipmentPriceVar, MaximumMonthly, terminal_rate, insurance_opt_in, Maintenance, ExtraWarranty, BusinessCon)
             
@@ -286,7 +320,7 @@ with st.form(key='myform'):
                 st.markdown("Business Continuity Fee ($)")
                 st.write(f"### {format(main_results['business_con_fee'], '10.2f')}")
                 
-        st.session_state.loan_details = {
+        loan_details = {
             "principal": invoice,
             "annual_rate": calculator.cpi,
             "loan_term_years": globals().get('LoanTermVar', 0),
@@ -294,13 +328,17 @@ with st.form(key='myform'):
             
         }
         
-        requests.post("http://127.0.0.1:5000/set_loan_details", json=st.session_state.loan_details)
+        # requests.post("http://127.0.0.1:5000/set_loan_details", json=st.session_state.loan_details)
 
         if Scheme == "By Loan Term":
             
-            amortization_df = requests.get("http://127.0.0.1:5000/get_amortization_df_scheme_1")
+            loan_details['scheme'] = Scheme
+            
+            amortization_df =  requests.post("http://127.0.0.1:5000/calculate_amortization", json=loan_details)
+            
+            # amortization_df = requests.get("http://127.0.0.1:5000/get_amortization_df_scheme_1")
             results = amortization_df.json()
-            print(results)
+            # print(results)
             
             viz_model = loan_amortization(invoice, calculator.cpi, LoanTermVar)
             plot = viz_model['amortization_schedule'] 
@@ -308,9 +346,13 @@ with st.form(key='myform'):
             new_pie = detailed_piechart(invoice, EquipmentPriceVar, calculator.cpi, LoanTermVar)
         elif Scheme == "Suggest your Maximum Monthly Rate":
             
+            loan_details['scheme'] = Scheme
+            
+            amortization_df =  requests.post("http://127.0.0.1:5000/calculate_amortization", json=loan_details)
+            
             amortization_df = requests.get("http://127.0.0.1:5000/get_amortization_df_scheme_2")
             results = amortization_df.json()
-            print(results)
+            # print(results)
             
             viz_model = loan_amortization_custom_payment(invoice, calculator.cpi, monthlyPayment)
             plot = viz_model['amortization_schedule']
@@ -329,7 +371,7 @@ with st.form(key='myform'):
         st.dataframe(df, hide_index=True)
         
         st.plotly_chart(piechart)
-        # st.plotly_chart(new_pie)
+        st.plotly_chart(new_pie)
             
             
         st.plotly_chart(plot)

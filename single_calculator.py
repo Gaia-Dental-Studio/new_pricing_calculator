@@ -9,6 +9,7 @@ import numpy_financial as npf
 import requests
 import math
 from loan_amortization import loan_amortization, loan_amortization_custom_payment
+from parameter import *
 
 
 
@@ -39,19 +40,24 @@ class Calculator():
             self.business_con_rate = params['business_con_rate']
         else:
             st.error("Failed to load parameters!")
+            
         self.name = None
         self.monthlyPayment = None
         self.totalPayment = None
         self.invoice = None
+                 
 
-    def getMonthlyPayment(self, EquipmentPrice, LoanTerm, terminal_rate, insurance='Yes', maintenance='Yes', extra_warranty=0, bussiness_con='Yes'): 
+
+    def getMonthlyPayment(self, EquipmentPrice, LoanTerm, terminal_rate, warranty_yrs, insurance='Yes', maintenance='Yes', extra_warranty=0, bussiness_con='Yes'): 
         markup_price = EquipmentPrice # as it has been mark upped in the input form
-        maintenance_fee = (markup_price * self.maintenance_ratio if markup_price > 2500 else 0) if maintenance == 'Yes' else 0 
-        warranty_yrs = 1 if markup_price <= 2000 else 2 if markup_price <= 5000 else 3 if markup_price <= 10000 else 5 if markup_price <= 30000 else 10
+        # maintenance_fee = (markup_price * self.maintenance_ratio if markup_price > 2500 else 0) if maintenance == 'Yes' else 0 
+        maintenance_fee = (markup_price * self.maintenance_ratio) if maintenance == 'Yes' else 0 
+ 
+        # warranty_yrs = 1 if markup_price <= 2000 else 2 if markup_price <= 5000 else 3 if markup_price <= 10000 else 5 if markup_price <= 30000 else 10
         additional_warranty = extra_warranty
         warranty_fee = markup_price * self.warranty_rate * (warranty_yrs + additional_warranty)
         insurance_fee = markup_price * self.insurance_rate * (warranty_yrs + additional_warranty) if insurance == 'Yes' else 0
-        travel_labor_cost = self.travel_labor_cost
+        travel_labor_cost = self.travel_labor_cost * LoanTerm
         business_con_fee = (markup_price * self.business_con_rate * (warranty_yrs + additional_warranty) if insurance == 'Yes' else 0) if bussiness_con == 'Yes' else 0
         terminal_value = markup_price * terminal_rate * (warranty_yrs + additional_warranty)
 
@@ -72,7 +78,8 @@ class Calculator():
             "warranty_fee": warranty_fee,
             "insurance_fee": insurance_fee,
             "business_con_fee": business_con_fee,
-            "terminal_value_fee": terminal_value
+            "terminal_value_fee": terminal_value,
+            'travel_labor_cost': travel_labor_cost
         }
 
         return results
