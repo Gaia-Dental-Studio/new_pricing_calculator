@@ -221,10 +221,14 @@ with st.form(key='myform'):
             
             response = requests.post("http://127.0.0.1:5000/set_user_parameters_scheme_1", json=user_parameters)
             
+            output = response.json()
+            
+            main_results = output.get('results')
+            print(main_results)
             
             # response = requests.get("http://127.0.0.1:5000/get_calculation_scheme_1")
         
-            main_results = response.json()
+            # main_results = response.json()
             
             invoice = main_results['total_payment']
             principal =  main_results['principal']
@@ -369,26 +373,26 @@ with st.form(key='myform'):
         
         st.divider()        
         
-        loan_details = {
-            "principal": principal,
-            "annual_rate": calculator.cpi,
-            "added_value_services": total_added_value,
-            "loan_term_years": globals().get('LoanTermVar', 0),
-            "monthly_payment": globals().get('monthlyPayment', 0)
+        # loan_details = {
+        #     "principal": principal,
+        #     "annual_rate": calculator.cpi,
+        #     "added_value_services": total_added_value,
+        #     "loan_term_years": globals().get('LoanTermVar', 0),
+        #     "monthly_payment": globals().get('monthlyPayment', 0)
             
             
-        }
+        # }
         
         # requests.post("http://127.0.0.1:5000/set_loan_details", json=st.session_state.loan_details)
 
-        if Scheme == "By Loan Term":
+        if Scheme == "By Loan Term": #scheme
             
-            loan_details['scheme'] = Scheme
+            # loan_details['scheme'] = Scheme
             
-            amortization_df =  requests.post("http://127.0.0.1:5000/calculate_amortization", json=loan_details)
+            # amortization_df =  requests.post("http://127.0.0.1:5000/calculate_amortization", json=loan_details)
             
             # amortization_df = requests.get("http://127.0.0.1:5000/get_amortization_df_scheme_1")
-            results = amortization_df.json()
+            results = output.get('results2')
             # print(results)
             
             viz_model = loan_amortization(principal, calculator.cpi, LoanTermVar, total_added_value)

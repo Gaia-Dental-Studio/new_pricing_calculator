@@ -63,9 +63,48 @@ def set_user_parameters_scheme_1():
         
         # Perform calculation immediately after setting parameters
         results = calculate_scheme_1(data)
-        return jsonify(results), 200
+        
+        # print(results['principal'])
+
+        
+        # Extract loan details
+        principal = results['principal']    
+        annual_rate = results['annual_rate']      
+        added_value_services = results['total_added_value'] 
+        loan_term_years = results['loan_term']
+        monthly_payment = results['monthlyPayment']
+        scheme = "By Loan Term"
+        
+        
+        
+        
+        
+        # Create a loan details dictionary
+        loan_details_df = {
+            "principal": principal,
+            "annual_rate": annual_rate,
+            "loan_term_years": loan_term_years,
+            "monthly_payment": monthly_payment,
+            "added_value_services": added_value_services,
+            "scheme": scheme
+        }
+        
+        
+        # Call calculate_amortization with the loan details dictionary
+        results2 = calculate_amortization(loan_details_df)
+
+        # Return results and results2 as JSON
+        
+        # note: results2 is the amortization schedule dataframe, 
+        # and results is the dictionary of the monthly payment, total payment, etc.
+        return jsonify({
+            'results': results,
+            'results2': results2
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
 
 def calculate_scheme_1(data):
     Maintenance = data['Maintenance']
@@ -85,6 +124,70 @@ def calculate_scheme_1(data):
     )
     
     return main_results
+
+
+# def calculate_amortization(data):
+#     global loan_details
+    
+#     # Validate input data
+#     if not data or not isinstance(data, dict):
+#         raise ValueError("Invalid input data")
+    
+#     # Extract and update loan details
+#     loan_details.update({
+#         "principal": data.get("principal"),
+#         "annual_rate": data.get("annual_rate"),
+#         "loan_term_years": data.get("loan_term_years"),
+#         "monthly_payment": data.get("monthly_payment"),
+#         "added_value_services": data.get("added_value_services")
+#     })
+    
+
+
+
+#     # Validate if scheme is provided
+#     scheme = data.get('scheme')
+#     if scheme not in ["By Loan Term", "Suggest your Maximum Monthly Rate"]:
+#         raise ValueError("Invalid or missing 'scheme' value. Must be 'By Loan Term' or 'Suggest your Maximum Monthly Rate'")
+
+#     # Calculate amortization based on scheme
+#     try:
+#         if scheme == "By Loan Term":
+#             # Scheme 1 calculation
+#             principal = loan_details['principal']
+#             annual_rate = loan_details['annual_rate']
+#             loan_term_years = loan_details['loan_term_years']
+#             added_value_services = loan_details['added_value_services']
+            
+
+#             # print('hello')
+#             df = loan_amortization_df_only(principal, annual_rate, loan_term_years, added_value_services)
+            
+
+#         elif scheme == "Suggest your Maximum Monthly Rate":
+#             # Scheme 2 calculation
+#             principal = loan_details['principal']
+#             annual_rate = loan_details['annual_rate']
+#             monthly_payment = loan_details['monthly_payment']
+            
+#             df = loan_amortization_custom_payment_df_only(principal, annual_rate, monthly_payment)
+        
+#         # Convert any NumPy types to Python native types
+#         df = df.applymap(lambda x: x.item() if isinstance(x, np.generic) else x)
+        
+       
+        
+#         # Convert the DataFrame to a JSON-serializable format
+#         json_data = df.to_dict(orient='records')
+        
+#         return json_data  # Returning raw data instead of jsonify
+#     except Exception as e:
+#         raise ValueError(f"Error during calculation: {str(e)}")
+    
+    
+    
+    
+    
 
 @app.route('/set_user_parameters_scheme_2', methods=['POST'])
 def set_user_parameters_scheme_2():
@@ -141,15 +244,12 @@ def calculate_scheme_2(data):
 
 
 @app.route('/calculate_amortization', methods=['POST'])
-def calculate_amortization():
+def calculate_amortization(data):
     global loan_details
-    
-    # Extract data from request
-    data = request.json
     
     # Validate input data
     if not data or not isinstance(data, dict):
-        return jsonify({"error": "Invalid input"}), 400
+        raise ValueError("Invalid input data")
     
     # Extract and update loan details
     loan_details.update({
@@ -159,12 +259,14 @@ def calculate_amortization():
         "monthly_payment": data.get("monthly_payment"),
         "added_value_services": data.get("added_value_services")
     })
+    
+    print(loan_details)
 
     # Validate if scheme is provided
     scheme = data.get('scheme')
     if scheme not in ["By Loan Term", "Suggest your Maximum Monthly Rate"]:
-        return jsonify({"error": "Invalid or missing 'scheme' value. Must be 1 or 2."}), 400
-    
+        raise ValueError("Invalid or missing 'scheme' value. Must be 'By Loan Term' or 'Suggest your Maximum Monthly Rate'")
+
     # Calculate amortization based on scheme
     try:
         if scheme == "By Loan Term":
@@ -189,9 +291,9 @@ def calculate_amortization():
         # Convert the DataFrame to a JSON-serializable format
         json_data = df.to_dict(orient='records')
         
-        return jsonify(json_data), 200
+        return json_data  # Returning raw data instead of jsonify
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise ValueError(f"Error during calculation: {str(e)}")
 
 
 if __name__ == '__main__':

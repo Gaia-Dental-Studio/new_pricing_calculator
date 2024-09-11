@@ -84,7 +84,9 @@ class Calculator():
             "insurance_fee": insurance_fee,
             "business_con_fee": business_con_fee,
             "terminal_value": terminal_value,
-            'travel_labor_cost': travel_labor_cost
+            'travel_labor_cost': travel_labor_cost,
+            'annual_rate': self.cpi,
+            'loan_term': LoanTerm,
         }
 
         return results

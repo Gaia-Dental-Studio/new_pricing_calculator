@@ -367,6 +367,9 @@ def loan_amortization_df_only(principal, annual_rate, loan_term_years, added_val
     Returns:
     dict: A dictionary containing Plotly figure objects for the loan amortization schedule.
     """
+    
+
+    
     # Convert APR to a monthly interest rate
     monthly_rate = annual_rate / 12  # Convert percentage to decimal and divide by 12 for monthly rate
     total_payments = loan_term_years * 12  # Total number of monthly payments
@@ -396,6 +399,8 @@ def loan_amortization_df_only(principal, annual_rate, loan_term_years, added_val
         })
 
     # Create DataFrame
+    
+
     df = pd.DataFrame(ratios)
     
     return df
