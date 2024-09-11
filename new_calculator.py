@@ -128,6 +128,8 @@ with st.expander('Product Selection', expanded=True):
             price = df.loc[df['Product Name'] == selected_product, 'Price'].iloc[0]
             price = round(price * (1+Calculator().markup_percentage))
             warranty = df.loc[(df['Product Name'] == selected_product), 'Warranty (years)'].iloc[0]
+        
+        warranty = st.number_input("Warranty (Years)", step=1, value=warranty, disabled=True)
     else:
         selected_product = None
         selected_type = None
@@ -156,7 +158,7 @@ def max_extra_warranty(warranty):
         return 2
 
 with st.form(key='myform'):
-    with st.expander("Additional Package Customization", expanded=True):
+    with st.expander("Added Value Services Customization", expanded=True):
         col1, col2 = st.columns(2)
 
         with col1:
@@ -209,7 +211,7 @@ with st.form(key='myform'):
                 'EquipmentPriceVar' : EquipmentPriceVar,
                 'FreeWarranty': warranty
             }
-            print(warranty)
+
             user_parameters = st.session_state.user_parameters
 
             # Converting int64 to int
@@ -225,12 +227,16 @@ with st.form(key='myform'):
             main_results = response.json()
             
             invoice = main_results['total_payment']
+            principal =  main_results['principal']
+            total_added_value = main_results['total_added_value']
             monthlyPayment = main_results['monthlyPayment']
             warranty_fee = main_results['warranty_fee']
             maintenance_fee = main_results['maintenance_fee']
             insurance_fee = main_results['insurance_fee']
             business_con_fee = main_results['business_con_fee']
-            terminal_value_fee = main_results['terminal_value_fee']
+            terminal_value = main_results['terminal_value']
+            travel_labor_cost = main_results['travel_labor_cost']
+
             
         elif Scheme == 'Suggest your Maximum Monthly Rate':
             
@@ -241,10 +247,19 @@ with st.form(key='myform'):
                 'ExtraWarranty' : ExtraWarranty,
                 'BusinessCon' : BusinessCon,
                 'MaximumMonthly' : MaximumMonthly,
-                'EquipmentPriceVar' : EquipmentPriceVar
+                'EquipmentPriceVar' : EquipmentPriceVar,
+                'FreeWarranty': warranty
             }
             
-            response = requests.post("http://127.0.0.1:5000/set_user_parameters_scheme_2", json=st.session_state.user_parameters)
+            user_parameters = st.session_state.user_parameters
+
+            # Converting int64 to int
+            for key, value in user_parameters.items():
+                if isinstance(value, np.int64):
+                    user_parameters[key] = int(value)
+            
+            
+            response = requests.post("http://127.0.0.1:5000/set_user_parameters_scheme_2", json=user_parameters)
             
             # response = requests.get("http://127.0.0.1:5000/get_calculation_scheme_2")
             
@@ -253,20 +268,28 @@ with st.form(key='myform'):
             main_results = response.json()
             
             monthlyPayment = MaximumMonthly
+            
             invoice = main_results['total_payment']
+            principal =  main_results['principal']
+            total_added_value = main_results['total_added_value']
             warranty_fee = main_results['warranty_fee']
             maintenance_fee = main_results['maintenance_fee']
             insurance_fee = main_results['insurance_fee']
             LoanTermVar = main_results['LoanTerm_years']
             last_monthlyPayment = main_results['last_monthlyPayment']
             business_con_fee = main_results['business_con_fee']
-            terminal_value_fee = main_results['terminal_value_fee']
+            terminal_value = main_results['terminal_value']
+            travel_labor_cost = main_results['travel_labor_cost']
 
-        st.session_state.invoice = format(invoice, '10.2f')
-        st.session_state.repayment = format(monthlyPayment, '10.2f')
+        st.session_state.invoice = format(invoice, '10,.2f')
+        st.session_state.principal = format(principal, '10,.2f')
+        st.session_state.total_added_value = format(total_added_value, '10,.2f')
+        st.session_state.repayment = format(monthlyPayment, '10,.2f')
         st.session_state.loanterm = LoanTermVar
         st.session_state.last_monthlyPayment = last_monthlyPayment if Scheme == 'Suggest your Maximum Monthly Rate' else None
         st.session_state.warranty = warranty
+        st.session_state.terminal_value = terminal_value
+        st.session_state.travel_labor_cost = travel_labor_cost
 
         res1, res2, res3 = st.columns([1, 1, 1])
         with res1: 
@@ -274,24 +297,50 @@ with st.form(key='myform'):
             # calculator.displayResult(st.session_state.invoice)
             st.markdown("Total Price with Package ($)")
             st.write(f"### {st.session_state.invoice}")
-            st.caption('Include Travel Fee')
-        with res2: 
-            # calculator.setName("Monthly Repayment ($)")
-            # calculator.displayResult(st.session_state.repayment)
+            st.caption('Principal and Added Value Services')
+            
             st.markdown("Monthly Repayment ($)")
             st.write(f"### {st.session_state.repayment}")
             if Scheme == 'Suggest your Maximum Monthly Rate':
                 st.caption(f"Last month's payment: {format(last_monthlyPayment, '10.2f')}")
-        with res3:
-            # calculator.setName("Loan Term (Months)")
-            # calculator.displayResult(st.session_state.loanterm * 12)
+        
+                 
+        with res2: 
+            
+            st.markdown("Total Principal ($)")
+            st.write(f"### {st.session_state.principal}")
+            st.caption('Applicable to Interest Rate')
+            # calculator.setName("Monthly Repayment ($)")
+            # calculator.displayResult(st.session_state.repayment)
+            
             st.markdown("Loan Term (Months)")
             st.write(f"### {st.session_state.loanterm * 12}")
+
+        with res3:
+            
+            st.markdown("Total Added Value Services ($)")
+            st.write(f"### {st.session_state.total_added_value}")
+            st.caption('Not Applicatble to Interest Rate')
+            
+
+            st.markdown("Terminal Value ($)")
+            st.write(f"### {format(st.session_state.terminal_value, '10.2f')}")
+            st.caption('value at the end of warranty years')
+        
+            
+            # st.markdown("Total Added Value Services)")
+            # st.write(f"### {st.session_state.total_added_value}")
+            # st.caption('Not Applicatble to Interest Rate')
+            
+            
+
+
+
             
         
-        st.divider()
+ 
         
-        with st.expander("Detailed Cost Structure", expanded=False):
+        with st.expander("Detailed Added Value Services Cost", expanded=False):
             res4, res5, res6 = st.columns([1, 1, 1])
             
             with res4:
@@ -299,7 +348,7 @@ with st.form(key='myform'):
                 st.write(f"### {format(maintenance_fee, '10.2f')}")
                 
             with res5:
-                st.markdown("Warranty Fee ($)")
+                st.markdown("Extra Warranty Fee ($)")
                 st.write(f"### {format(warranty_fee, '10.2f')}")
                 
             with res6:
@@ -308,23 +357,25 @@ with st.form(key='myform'):
                 
             res7, res8, res9 = st.columns([1, 1, 1])
             
+                
             with res7:
-                st.markdown("Terminal Value Fee ($)")
-                st.write(f"### {format(main_results['terminal_value_fee'], '10.2f')}")
+                st.markdown("Travel Labor Cost ($)")
+                st.write(f"### {format(st.session_state.travel_labor_cost, '10.2f')}")
                 
             with res8:
-                st.markdown("Travel Labor Cost ($)")
-                st.write(f"### {format(calculator.travel_labor_cost, '10.2f')}")
-                
-            with res9:
                 st.markdown("Business Continuity Fee ($)")
                 st.write(f"### {format(main_results['business_con_fee'], '10.2f')}")
                 
+        
+        st.divider()        
+        
         loan_details = {
-            "principal": invoice,
+            "principal": principal,
             "annual_rate": calculator.cpi,
+            "added_value_services": total_added_value,
             "loan_term_years": globals().get('LoanTermVar', 0),
             "monthly_payment": globals().get('monthlyPayment', 0)
+            
             
         }
         
@@ -340,17 +391,17 @@ with st.form(key='myform'):
             results = amortization_df.json()
             # print(results)
             
-            viz_model = loan_amortization(invoice, calculator.cpi, LoanTermVar)
+            viz_model = loan_amortization(principal, calculator.cpi, LoanTermVar, total_added_value)
             plot = viz_model['amortization_schedule'] 
             piechart = viz_model['proportion_pie_chart']
-            new_pie = detailed_piechart(invoice, EquipmentPriceVar, calculator.cpi, LoanTermVar)
+            # new_pie = detailed_piechart(invoice, EquipmentPriceVar, calculator.cpi, LoanTermVar)
         elif Scheme == "Suggest your Maximum Monthly Rate":
             
             loan_details['scheme'] = Scheme
             
             amortization_df =  requests.post("http://127.0.0.1:5000/calculate_amortization", json=loan_details)
             
-            amortization_df = requests.get("http://127.0.0.1:5000/get_amortization_df_scheme_2")
+            # amortization_df = requests.get("http://127.0.0.1:5000/get_amortization_df_scheme_2")
             results = amortization_df.json()
             # print(results)
             
@@ -368,10 +419,10 @@ with st.form(key='myform'):
         # Reorder the DataFrame
         df = df[cols]
         
-        st.dataframe(df, hide_index=True)
+        st.dataframe(df, hide_index=True, column_order=['Month', 'Added Value Payment', 'Interest Payment', 'Principal Payment', 'Remaining Principal'])
         
         st.plotly_chart(piechart)
-        st.plotly_chart(new_pie)
+        # st.plotly_chart(new_pie)
             
             
         st.plotly_chart(plot)
@@ -387,7 +438,7 @@ with st.form(key='myform'):
             "maintenance_fee": maintenance_fee, 
             "warranty_fee": warranty_fee, 
             "insurance_fee": insurance_fee, 
-            "terminal_value_fee": terminal_value_fee, 
+            "terminal_value": terminal_value, 
             "business_con_fee": business_con_fee,
             "scheme": Scheme}
         

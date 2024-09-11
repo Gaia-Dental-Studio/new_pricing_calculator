@@ -3,7 +3,7 @@ import numpy_financial as npf
 import plotly.graph_objects as go
 import math
 
-def loan_amortization(principal, annual_rate, loan_term_years):
+def loan_amortization(principal, annual_rate, loan_term_years, added_value_services):
     """
     Function to calculate loan amortization schedule and return a dictionary of Plotly figures.
     
@@ -11,7 +11,8 @@ def loan_amortization(principal, annual_rate, loan_term_years):
     principal (float): Principal loan amount.
     annual_rate (float): Annual interest rate in percent.
     loan_term_years (int): Loan term in years.
-
+    added_value_services (float): Total added value services to be paid.
+    
     Returns:
     dict: A dictionary containing Plotly figure objects for the loan amortization schedule.
     """
@@ -21,6 +22,8 @@ def loan_amortization(principal, annual_rate, loan_term_years):
 
     # Calculate fixed monthly payment
     monthly_payment = npf.pmt(rate=monthly_rate, nper=total_payments, pv=-principal)
+    
+    monthly_added_value_payment = added_value_services / total_payments
 
     # Initialize list for storing results
     ratios = []
@@ -32,7 +35,8 @@ def loan_amortization(principal, annual_rate, loan_term_years):
         ratios.append({
             'Month': month,
             'Interest Payment': interest_payment,
-            'Principal Payment': principal_payment
+            'Principal Payment': principal_payment,
+            'Added Value Payment': monthly_added_value_payment
         })
 
     # Create DataFrame
@@ -61,13 +65,23 @@ def loan_amortization(principal, annual_rate, loan_term_years):
         y=df['Principal Payment'],
         name='Principal Payment',
         marker_color='beige',
-        hovertext=[f"Month: {month}<br>Principal Payment: ${principal:.2f}" for month, principal in zip(df['Month'], df['Principal Payment'])],
+        hovertext=[f"Principal Payment: ${principal:.2f}" for month, principal in zip(df['Month'], df['Principal Payment'])],
+        hoverinfo='text'
+    ))
+
+    # Add added value payment bar
+    fig1.add_trace(go.Bar(
+        x=df['Month'],
+        y=df['Added Value Payment'],
+        name='Added Value Payment',
+        marker_color='green',
+        hovertext=[f"Month: {month}<br>Added Value Payment: ${added_value:.2f}" for month, added_value in zip(df['Month'], df['Added Value Payment'])],
         hoverinfo='text'
     ))
 
     # Update layout for the bar chart
     fig1.update_layout(
-        title='Monthly Interest and Principal Payments for a Fixed-Rate Loan',
+        title='Monthly Interest, Principal, and Added Value Payments for a Fixed-Rate Loan',
         xaxis_title='Month',
         yaxis_title='Payment Amount ($)',
         barmode='stack',
@@ -77,19 +91,28 @@ def loan_amortization(principal, annual_rate, loan_term_years):
         hovermode='x unified',  # This setting will show hover info for all data points at the same x-value
     )
 
-    # Calculate total interest and principal payments
+    # Calculate total interest, principal, and added value payments
     total_interest = df['Interest Payment'].sum()
     total_principal = df['Principal Payment'].sum()
+    total_added_value = df['Added Value Payment'].sum()
 
-    # Create pie chart for total principal and interest proportion
+    # Create pie chart for total principal, interest, and added value proportion with gradient blue colors
     fig2 = go.Figure(data=[go.Pie(
-        labels=['Total Interest', 'Total Principal'],
-                                  values=[round(total_interest,2), round(total_principal,2)],
-                                  hoverinfo='label+percent+value', textinfo='label+value')])
+        labels=['Total Interest', 'Total Principal', 'Total Added Value Services'],
+        values=[round(total_interest, 2), round(total_principal, 2), round(total_added_value, 2)],
+        hoverinfo='label+percent+value', 
+        textinfo='label+value',
+        marker=dict(
+            colors=['rgba(173, 216, 230, 0.8)',  # Light pastel blue for Interest
+                    'rgba(135, 206, 250, 0.9)',  # Medium pastel blue for Principal
+                    'rgba(176, 224, 230, 1.0)'],  # Darker pastel blue for Added Value Services
+            line=dict(color='white', width=2)  # White lines between slices
+        )
+    )])
 
     # Update layout for the pie chart
     fig2.update_layout(
-        title='Principal-Interest Ratio'
+        title='Principal-Interest-Added Value Services Ratio',
     )
 
     # Return a dictionary containing both figures
@@ -332,7 +355,7 @@ def detailed_piechart(principal, equipmentPrice, annual_rate, loan_term_years):
     
     
     
-def loan_amortization_df_only(principal, annual_rate, loan_term_years):
+def loan_amortization_df_only(principal, annual_rate, loan_term_years, added_value_services):
     """
     Function to calculate loan amortization schedule and return a dictionary of Plotly figures.
     
@@ -347,6 +370,8 @@ def loan_amortization_df_only(principal, annual_rate, loan_term_years):
     # Convert APR to a monthly interest rate
     monthly_rate = annual_rate / 12  # Convert percentage to decimal and divide by 12 for monthly rate
     total_payments = loan_term_years * 12  # Total number of monthly payments
+    
+    monthly_added_value_payment = added_value_services / total_payments
 
     # Calculate fixed monthly payment
     monthly_payment = npf.pmt(rate=monthly_rate, nper=total_payments, pv=-principal)
@@ -365,7 +390,9 @@ def loan_amortization_df_only(principal, annual_rate, loan_term_years):
             'Month': month,
             'Interest Payment': interest_payment,
             'Principal Payment': principal_payment,
-            'Remaining Principal': remaining_principal
+            'Remaining Principal': remaining_principal,
+            'Added Value Payment': monthly_added_value_payment,
+            'Total Payment': principal_payment + interest_payment + monthly_added_value_payment
         })
 
     # Create DataFrame

@@ -96,7 +96,7 @@ def set_user_parameters_scheme_2():
     if not data or not isinstance(data, dict):
         return jsonify({"error": "Invalid input"}), 400
     
-    required_keys = ['EquipmentPriceVar', 'MaximumMonthly', 'terminal_rate', 
+    required_keys = ['EquipmentPriceVar', 'MaximumMonthly', 'terminal_rate', 'FreeWarranty', 
                      'insurance_opt_in', 'Maintenance', 'ExtraWarranty', 'BusinessCon']
     missing_keys = [key for key in required_keys if key not in data]
     
@@ -121,13 +121,21 @@ def calculate_scheme_2(data):
     Maintenance = data['Maintenance']
     ExtraWarranty = data['ExtraWarranty']
     BusinessCon = data['BusinessCon']
+    warranty_yrs = data['FreeWarranty']
     
     calculator = Calculator()
     
+    print(data)
+    
     main_results = calculator.getLoanTerm(
-        EquipmentPriceVar, MaximumMonthly, terminal_rate, insurance_opt_in, 
-        Maintenance, ExtraWarranty, BusinessCon
+        EquipmentPrice=EquipmentPriceVar, monthlyPayment=MaximumMonthly, terminal_rate=terminal_rate, warranty_yrs=warranty_yrs, insurance=insurance_opt_in, 
+        maintenance=Maintenance, extra_warranty=ExtraWarranty, bussiness_con=BusinessCon
     )
+    
+    # print('this')
+    
+    print(main_results)
+
     
     return main_results
 
@@ -148,7 +156,8 @@ def calculate_amortization():
         "principal": data.get("principal"),
         "annual_rate": data.get("annual_rate"),
         "loan_term_years": data.get("loan_term_years"),
-        "monthly_payment": data.get("monthly_payment")
+        "monthly_payment": data.get("monthly_payment"),
+        "added_value_services": data.get("added_value_services")
     })
 
     # Validate if scheme is provided
@@ -163,8 +172,9 @@ def calculate_amortization():
             principal = loan_details['principal']
             annual_rate = loan_details['annual_rate']
             loan_term_years = loan_details['loan_term_years']
+            added_value_services = loan_details['added_value_services']
             
-            df = loan_amortization_df_only(principal, annual_rate, loan_term_years)
+            df = loan_amortization_df_only(principal, annual_rate, loan_term_years, added_value_services)
         elif scheme == "Suggest your Maximum Monthly Rate":
             # Scheme 2 calculation
             principal = loan_details['principal']
