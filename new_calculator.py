@@ -265,11 +265,14 @@ with st.form(key='myform'):
             
             response = requests.post("http://127.0.0.1:5000/set_user_parameters_scheme_2", json=user_parameters)
             
+            output = response.json()
+            
+            main_results = output.get('results')
+            
             # response = requests.get("http://127.0.0.1:5000/get_calculation_scheme_2")
             
             # main_results = calculator.getLoanTerm(EquipmentPriceVar, MaximumMonthly, terminal_rate, insurance_opt_in, Maintenance, ExtraWarranty, BusinessCon)
             
-            main_results = response.json()
             
             monthlyPayment = MaximumMonthly
             
@@ -395,33 +398,42 @@ with st.form(key='myform'):
             results = output.get('results2')
             # print(results)
             
+            
+            
             viz_model = loan_amortization(principal, calculator.cpi, LoanTermVar, total_added_value)
             plot = viz_model['amortization_schedule'] 
             piechart = viz_model['proportion_pie_chart']
             # new_pie = detailed_piechart(invoice, EquipmentPriceVar, calculator.cpi, LoanTermVar)
+            
+            df = pd.DataFrame(results)
+            # Get current column order
+            cols = df.columns.tolist()
+
+            # Swap the first and second columns
+            cols[0], cols[1] = cols[1], cols[0]
+            
+            df = df[cols]
+            
+            
         elif Scheme == "Suggest your Maximum Monthly Rate":
             
-            loan_details['scheme'] = Scheme
+            # loan_details['scheme'] = Scheme
             
-            amortization_df =  requests.post("http://127.0.0.1:5000/calculate_amortization", json=loan_details)
+            # amortization_df =  requests.post("http://127.0.0.1:5000/calculate_amortization", json=loan_details)
             
             # amortization_df = requests.get("http://127.0.0.1:5000/get_amortization_df_scheme_2")
-            results = amortization_df.json()
-            # print(results)
+            results = output.get('results2')
+    
+
             
-            viz_model = loan_amortization_custom_payment(invoice, calculator.cpi, monthlyPayment)
+            viz_model = loan_amortization_custom_payment(invoice, calculator.cpi, monthlyPayment, total_added_value)
             plot = viz_model['amortization_schedule']
             piechart = viz_model['proportion_pie_chart']
         
-        df = pd.DataFrame(results)
-        # Get current column order
-        cols = df.columns.tolist()
-
-        # Swap the first and second columns
-        cols[0], cols[1] = cols[1], cols[0]
+            df = pd.DataFrame(results)
 
         # Reorder the DataFrame
-        df = df[cols]
+        
         
         st.dataframe(df, hide_index=True, column_order=['Month', 'Added Value Payment', 'Interest Payment', 'Principal Payment', 'Remaining Principal'])
         

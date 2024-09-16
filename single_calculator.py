@@ -51,11 +51,12 @@ class Calculator():
     def getMonthlyPayment(self, EquipmentPrice, LoanTerm, terminal_rate, warranty_yrs, insurance='Yes', maintenance='Yes', extra_warranty=0, bussiness_con='Yes'): 
         markup_price = EquipmentPrice # as it has been mark upped in the input form
         principal = markup_price
+        additional_warranty = extra_warranty
         # maintenance_fee = (markup_price * self.maintenance_ratio if markup_price > 2500 else 0) if maintenance == 'Yes' else 0 
-        maintenance_fee = (markup_price * self.maintenance_ratio) if maintenance == 'Yes' else 0 
+        maintenance_fee = (markup_price * self.maintenance_ratio * (warranty_yrs + additional_warranty)) if maintenance == 'Yes' else 0 
  
         # warranty_yrs = 1 if markup_price <= 2000 else 2 if markup_price <= 5000 else 3 if markup_price <= 10000 else 5 if markup_price <= 30000 else 10
-        additional_warranty = extra_warranty
+        
         warranty_fee = markup_price * self.warranty_rate * (additional_warranty)
         insurance_fee = markup_price * self.insurance_rate * (warranty_yrs + additional_warranty) if insurance == 'Yes' else 0
         travel_labor_cost = self.travel_labor_cost * LoanTerm
@@ -96,18 +97,20 @@ class Calculator():
         markup_price = EquipmentPrice  # as it has been marked up in the input form
         principal = markup_price
         
+        additional_warranty = extra_warranty
+        
         # Calculating the maintenance fee
-        maintenance_fee = (markup_price * self.maintenance_ratio) if maintenance == 'Yes' else 0 
+        maintenance_fee = (markup_price * self.maintenance_ratio * (warranty_yrs + additional_warranty)) if maintenance == 'Yes' else 0 
         
         # Calculating the warranty fee
-        additional_warranty = extra_warranty
+        
         warranty_fee = markup_price * self.warranty_rate * (additional_warranty)
         
         # Calculating the insurance fee
         insurance_fee = markup_price * self.insurance_rate * (warranty_yrs + additional_warranty) if insurance == 'Yes' else 0
         
         # Travel labor cost
-        travel_labor_cost = self.travel_labor_cost
+        travel_labor_cost = self.travel_labor_cost * (warranty_yrs + additional_warranty)
         
         # Calculating the terminal value
         terminal_value = markup_price * terminal_rate
@@ -121,25 +124,31 @@ class Calculator():
         # Define monthly interest rate
         monthly_interest_rate = self.monthly_interest_rate
         
+
+        
         # First, calculate the LoanTerm in months based on the principal only
         LoanTerm_months = npf.nper(monthly_interest_rate, -monthlyPayment, principal, 0)
         
         # Round up to the nearest whole number of months
         LoanTerm_months_rounded = math.ceil(LoanTerm_months)
         
-        # Now, calculate the portion of the monthly payment that covers the added value services
-        monthly_added_value_payment = total_added_value_services / LoanTerm_months_rounded
-        
-        # Adjust the monthly payment for the principal by subtracting the portion for added value services
-        adjusted_monthlyPayment = monthlyPayment - monthly_added_value_payment
-        
         # Calculate the remaining balance after making LoanTerm_months_rounded - 1 payments
-        remaining_balance = npf.fv(monthly_interest_rate, LoanTerm_months_rounded - 1, -adjusted_monthlyPayment, principal)
+        remaining_balance = npf.fv(monthly_interest_rate, LoanTerm_months_rounded - 1, -monthlyPayment, principal)
         
         # Calculate the final payment to settle the remaining balance
         final_payment = remaining_balance * (1 + monthly_interest_rate)
         
-        last_monthlyPayment = -final_payment + monthly_added_value_payment  # Adjust last payment to include the added value payment
+        remaining_added_value_services = total_added_value_services - ( monthlyPayment - (-final_payment) )
+        
+        while remaining_added_value_services > monthlyPayment:
+            
+            remaining_added_value_services -= monthlyPayment
+            LoanTerm_months_rounded += 1
+
+        
+        last_monthlyPayment = remaining_added_value_services  # Adjust last payment to include the added value payment
+        
+        LoanTerm_months_rounded += 1
         
         # Calculate the LoanTerm in years
         LoanTerm_years = LoanTerm_months_rounded / 12
@@ -154,14 +163,17 @@ class Calculator():
             'total_added_value': total_added_value_services,  # Total added value services
             "LoanTerm_years": LoanTerm_years,
             "LoanTerm_months": LoanTerm_months_rounded,
-            "monthly_added_value_payment": monthly_added_value_payment,  # Fixed payment for added value services
+            # "monthly_added_value_payment": monthly_added_value_payment,  # Fixed payment for added value services
             "last_monthlyPayment": last_monthlyPayment,
             "maintenance_fee": maintenance_fee,
             "warranty_fee": warranty_fee,
             "insurance_fee": insurance_fee,
             "terminal_value": terminal_value,
             "business_con_fee": business_con_fee,
-            "travel_labor_cost": travel_labor_cost
+            "travel_labor_cost": travel_labor_cost,
+            'annual_rate': self.cpi,
+            'loan_term': LoanTerm_years,
+            'monthlyPayment': monthlyPayment,
         }
 
         return results

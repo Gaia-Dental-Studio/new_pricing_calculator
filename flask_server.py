@@ -210,11 +210,55 @@ def set_user_parameters_scheme_2():
         # Update global parameters
         user_defined_parameters_scheme_2.update(data)
         
-        # Perform calculation immediately after setting parameters
         results = calculate_scheme_2(data)
-        return jsonify(results), 200
+        
+        # print(results)
+        
+        # Extract loan details
+        principal = results['principal']    
+        annual_rate = results['annual_rate']      
+        added_value_services = results['total_added_value'] 
+        loan_term_years = results['loan_term']
+        monthly_payment = results['monthlyPayment']
+        last_payment = results['last_monthlyPayment']
+        scheme = "Suggest your Maximum Monthly Rate"
+        
+        print(principal, annual_rate, added_value_services, loan_term_years, monthly_payment, last_payment)
+        
+        
+        
+        # Create a loan details dictionary
+        loan_details_df = {
+            "principal": principal,
+            "annual_rate": annual_rate,
+            "loan_term_years": loan_term_years,
+            "monthly_payment": monthly_payment,
+            "added_value_services": added_value_services,
+            "scheme": scheme
+        }
+        
+        print(loan_details_df)
+        
+        # Call calculate_amortization with the loan details dictionary
+        # results2 = None
+        results2 = calculate_amortization(loan_details_df)
+
+        # Return results and results2 as JSON
+        
+        # note: results2 is the amortization schedule dataframe, 
+        # and results is the dictionary of the monthly payment, total payment, etc.
+        return jsonify({
+            'results': results,
+            'results2': results2
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+        
+    #     # Perform calculation immediately after setting parameters
+    #     results = calculate_scheme_2(data)
+    #     return jsonify(results), 200
+    # except Exception as e:
+    #     return jsonify({"error": str(e)}), 500
 
 def calculate_scheme_2(data):
     EquipmentPriceVar = data['EquipmentPriceVar']
@@ -228,17 +272,18 @@ def calculate_scheme_2(data):
     
     calculator = Calculator()
     
-    print(data)
+    # print(data)
+    
+    # print(EquipmentPriceVar, MaximumMonthly, terminal_rate, insurance_opt_in, Maintenance, ExtraWarranty, BusinessCon, warranty_yrs)
     
     main_results = calculator.getLoanTerm(
         EquipmentPrice=EquipmentPriceVar, monthlyPayment=MaximumMonthly, terminal_rate=terminal_rate, warranty_yrs=warranty_yrs, insurance=insurance_opt_in, 
         maintenance=Maintenance, extra_warranty=ExtraWarranty, bussiness_con=BusinessCon
     )
     
-    # print('this')
-    
-    print(main_results)
+    # print(EquipmentPriceVar, MaximumMonthly, terminal_rate, insurance_opt_in, Maintenance, ExtraWarranty, BusinessCon, warranty_yrs)
 
+    print(main_results)
     
     return main_results
 
@@ -260,7 +305,7 @@ def calculate_amortization(data):
         "added_value_services": data.get("added_value_services")
     })
     
-    print(loan_details)
+    # print(loan_details)
 
     # Validate if scheme is provided
     scheme = data.get('scheme')
@@ -282,8 +327,12 @@ def calculate_amortization(data):
             principal = loan_details['principal']
             annual_rate = loan_details['annual_rate']
             monthly_payment = loan_details['monthly_payment']
+            added_value_services = loan_details['added_value_services']
+            loan_term_years = loan_details['loan_term_years']
             
-            df = loan_amortization_custom_payment_df_only(principal, annual_rate, monthly_payment)
+            print(principal, annual_rate, monthly_payment, added_value_services)
+            
+            df = loan_amortization_custom_payment_df_only(principal, annual_rate, monthly_payment, added_value_services)
         
         # Convert any NumPy types to Python native types
         df = df.applymap(lambda x: x.item() if isinstance(x, np.generic) else x)

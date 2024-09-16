@@ -122,59 +122,25 @@ def loan_amortization(principal, annual_rate, loan_term_years, added_value_servi
     }
 
 
-def loan_amortization_custom_payment(principal, annual_rate, monthly_payment):
+def loan_amortization_custom_payment(principal, annual_rate, monthly_payment, total_added_value):
     """
-    Function to calculate loan amortization schedule based on a fixed monthly payment 
+    Function to calculate loan amortization schedule with a fixed monthly payment and a total added value,
     and return a dictionary of Plotly figures.
 
     Parameters:
     principal (float): Principal loan amount.
     annual_rate (float): Annual interest rate in percent.
     monthly_payment (float): Fixed monthly payment.
+    total_added_value (float): Total added value services (not subject to interest).
 
     Returns:
     dict: A dictionary containing Plotly figure objects for the loan amortization schedule and pie chart.
     """
-    # Convert APR to a monthly interest rate
-    monthly_rate = annual_rate / 12  # Convert percentage to decimal and divide by 12 for monthly rate
-
-    # Calculate the loan term in months (can be a decimal)
-    loan_term_months = npf.nper(rate=monthly_rate, pmt=-monthly_payment, pv=principal)
-    
-    # Round up to the nearest whole number of months
-    loan_term_months_rounded = math.ceil(loan_term_months)
-
-    # Calculate the remaining balance after making loan_term_months_rounded - 1 payments
-    remaining_balance = npf.fv(rate=monthly_rate, nper=loan_term_months_rounded - 1, pmt=-monthly_payment, pv=principal)
-    
-    # Calculate the final payment to settle the remaining balance
-    final_payment = -(remaining_balance * (1 + monthly_rate))
-
-    # Initialize list for storing results
-    ratios = []
-
-    # Calculate interest and principal portions for each month
-    for month in range(1, loan_term_months_rounded + 1):
-        if month == loan_term_months_rounded:
-            # Use the final payment for the last month
-            interest_payment = npf.ipmt(rate=monthly_rate, per=month, nper=loan_term_months_rounded, pv=-principal)
-            principal_payment = final_payment - interest_payment
-        else:
-            interest_payment = npf.ipmt(rate=monthly_rate, per=month, nper=loan_term_months_rounded, pv=-principal)
-            principal_payment = monthly_payment - interest_payment
-        
-        # Append results for each month
-        ratios.append({
-            'Month': month,
-            'Interest Payment': interest_payment,
-            'Principal Payment': principal_payment,
-            'Total Payment': principal_payment + interest_payment
-        })
-
-    # Create DataFrame
-    df = pd.DataFrame(ratios)
+    # Call the loan_amortization_custom_payment_df_only function to get the amortization DataFrame
+    df = loan_amortization_custom_payment_df_only(principal, annual_rate, monthly_payment, total_added_value)
 
     # Determine figure size dynamically based on number of data points
+    loan_term_months_rounded = df['Month'].max()
     width = 600 if loan_term_months_rounded <= 12 else 40 * loan_term_months_rounded
     height = 600 if loan_term_months_rounded <= 12 else 700
 
@@ -200,10 +166,20 @@ def loan_amortization_custom_payment(principal, annual_rate, monthly_payment):
         hovertext=[f"Month: {month}<br>Principal Payment: ${principal:.2f}" for month, principal in zip(df['Month'], df['Principal Payment'])],
         hoverinfo='text'
     ))
+    
+    # Add added value payment bar (for months where it's relevant)
+    fig1.add_trace(go.Bar(
+        x=df['Month'],
+        y=df['Added Value Payment'],
+        name='Added Value Payment',
+        marker_color='green',
+        hovertext=[f"Month: {month}<br>Added Value Payment: ${added_value:.2f}" for month, added_value in zip(df['Month'], df['Added Value Payment'])],
+        hoverinfo='text'
+    ))
 
     # Update layout for the bar chart
     fig1.update_layout(
-        title='Monthly Interest and Principal Payments for a Fixed-Rate Loan with Custom Monthly Payment',
+        title='Monthly Payments: Principal, Interest, and Added Value',
         xaxis_title='Month',
         yaxis_title='Payment Amount ($)',
         barmode='stack',
@@ -213,19 +189,25 @@ def loan_amortization_custom_payment(principal, annual_rate, monthly_payment):
         hovermode='x unified',  # This setting will show hover info for all data points at the same x-value
     )
 
-    # Calculate total interest and principal payments
+    # Calculate total interest, principal, and added value payments
     total_interest = df['Interest Payment'].sum()
     total_principal = df['Principal Payment'].sum()
+    total_added_value = df['Added Value Payment'].sum()
 
-    # Create pie chart for total principal and interest proportion
+    # Create pie chart for total payment breakdown (interest, principal, and added value)
     fig2 = go.Figure(data=[go.Pie(
-        labels=['Total Interest', 'Total Principal'],
-                                  values=[round(total_interest,2), round(total_principal,2)],
-                                  hoverinfo='label+percent+value', textinfo='label+value')])
+        labels=['Total Interest', 'Total Principal', 'Total Added Value'],
+        values=[round(total_interest, 2), round(total_principal, 2), round(total_added_value, 2)],
+                marker=dict(
+            colors=['rgba(173, 216, 230, 0.8)',  # Light pastel blue for Interest
+                    'rgba(135, 206, 250, 0.9)',  # Medium pastel blue for Principal
+                    'rgba(176, 224, 230, 1.0)'],  # Darker pastel blue for Added Value Services
+            line=dict(color='white', width=2) ), # White lines between slices
+        hoverinfo='label+percent+value', textinfo='label+value')])
 
     # Update layout for the pie chart
     fig2.update_layout(
-        title='Principal-Interest Ratio'
+        title='Payment Breakdown: Principal, Interest, and Added Value'
     )
 
     # Return a dictionary containing both figures
@@ -406,23 +388,24 @@ def loan_amortization_df_only(principal, annual_rate, loan_term_years, added_val
     return df
 
 
-def loan_amortization_custom_payment_df_only(principal, annual_rate, monthly_payment):
+def loan_amortization_custom_payment_df_only(principal, annual_rate, monthly_payment, total_added_value):
     """
-    Function to calculate loan amortization schedule based on a fixed monthly payment 
-    and return a dictionary of Plotly figures.
+    Function to calculate loan amortization schedule with a fixed monthly payment and a total added value,
+    and return a DataFrame. The total added value extends the loan term after the principal is fully paid.
 
     Parameters:
     principal (float): Principal loan amount.
     annual_rate (float): Annual interest rate in percent.
     monthly_payment (float): Fixed monthly payment.
+    total_added_value (float): Total added value services (not subject to interest).
 
     Returns:
-    dict: A dictionary containing Plotly figure objects for the loan amortization schedule and pie chart.
+    pd.DataFrame: A DataFrame showing the amortization schedule.
     """
     # Convert APR to a monthly interest rate
-    monthly_rate = annual_rate / 12  # Convert percentage to decimal and divide by 12 for monthly rate
+    monthly_rate = annual_rate / 12  # Convert annual interest rate to monthly rate
 
-    # Calculate the loan term in months (can be a decimal)
+    # Calculate the loan term in months based on the principal
     loan_term_months = npf.nper(rate=monthly_rate, pmt=-monthly_payment, pv=principal)
     
     # Round up to the nearest whole number of months
@@ -435,27 +418,64 @@ def loan_amortization_custom_payment_df_only(principal, annual_rate, monthly_pay
     final_payment = -(remaining_balance * (1 + monthly_rate))
 
     # Initialize list for storing results
-    ratios = []
+    amortization_schedule = []
+    
+    remaining_added_value = total_added_value
 
     # Calculate interest and principal portions for each month
+    remaining_principal = principal
     for month in range(1, loan_term_months_rounded + 1):
         if month == loan_term_months_rounded:
-            # Use the final payment for the last month
-            interest_payment = npf.ipmt(rate=monthly_rate, per=month, nper=loan_term_months_rounded, pv=-principal)
+            # Last month, use the final payment to settle the remaining balance
+            interest_payment = remaining_principal * monthly_rate
             principal_payment = final_payment - interest_payment
         else:
-            interest_payment = npf.ipmt(rate=monthly_rate, per=month, nper=loan_term_months_rounded, pv=-principal)
+            # Regular monthly payments
+            interest_payment = remaining_principal * monthly_rate
             principal_payment = monthly_payment - interest_payment
         
-        # Append results for each month
-        ratios.append({
+        # Update the remaining principal
+        remaining_principal -= principal_payment
+        
+        added_value_payment = 0 if principal_payment + interest_payment == monthly_payment else monthly_payment - principal_payment - interest_payment if remaining_added_value > (monthly_payment - principal_payment - interest_payment) else remaining_added_value
+        
+        # Append results for the month, no added value payment during principal amortization
+        amortization_schedule.append({
             'Month': month,
             'Interest Payment': interest_payment,
             'Principal Payment': principal_payment,
-            'Total Payment': principal_payment + interest_payment
+            'Added Value Payment': added_value_payment,  # No added value payment until principal is paid off
+            'Total Payment': principal_payment + interest_payment + added_value_payment,
+            'Remaining Principal': max(0, remaining_principal)  # Ensure no negative values
         })
+        
+        remaining_added_value -= added_value_payment
 
-    # Create DataFrame
-    df = pd.DataFrame(ratios)
+    # After principal is paid off, calculate the remaining added value
+    
+    while remaining_added_value > 0:
+        if remaining_added_value > monthly_payment:
+            amortization_schedule.append({
+                'Month': len(amortization_schedule) + 1,
+                'Interest Payment': 0,  # No interest on added value
+                'Principal Payment': 0,  # No principal left to pay
+                'Added Value Payment': monthly_payment,  # Pay added value services
+                'Total Payment': monthly_payment,
+                'Remaining Principal': 0
+            })
+            remaining_added_value -= monthly_payment
+        else:
+            amortization_schedule.append({
+                'Month': len(amortization_schedule) + 1,
+                'Interest Payment': 0,
+                'Principal Payment': 0,
+                'Added Value Payment': remaining_added_value,  # Final added value payment
+                'Total Payment': remaining_added_value,
+                'Remaining Principal': 0
+            })
+            remaining_added_value = 0
+
+    # Convert the schedule to a DataFrame for easier viewing
+    df = pd.DataFrame(amortization_schedule)
     
     return df

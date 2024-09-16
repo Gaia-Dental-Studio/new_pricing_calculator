@@ -3,3 +3,7 @@ To Do List:
 - Fix Travel cost for Loan Scheme 2
 - Adjust the loan_amortization.py to have total remaining principle for all methods
 - Adjust set parameter page to have same editorial like in new calculator
+
+
+- getLoanTerm need to be redefine: Propose new way to have payment obligation unlike the first Scheme
+- here, they would need to pay two type of installment, the principal-interest and the added_value_services
