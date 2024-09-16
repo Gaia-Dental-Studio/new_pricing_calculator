@@ -1,7 +1,8 @@
-Flask
-numpy
-numpy_financial
-pandas
-Requests
-streamlit
-openpyxl
+Flask==2.2.2
+numpy==1.23.5
+numpy_financial==1.0.0
+pandas==1.5.3
+plotly==5.9.0
+plotly==5.23.0
+Requests==2.32.3
+streamlit==1.37.1
