@@ -16,6 +16,10 @@ from parameter import *
 class Calculator():
     def __init__(self):
         
+        
+
+        
+        
         # COMMENT THIS IF FLASK CONNECTION IS WORKING
         self.cpi = 0.12
         self.markup_percentage = 0.001
@@ -45,10 +49,70 @@ class Calculator():
         self.monthlyPayment = None
         self.totalPayment = None
         self.invoice = None
+        
+        
+    def get_parameter(self, EquipmentPrice):
+        """
+        Finds the matching row where EquipmentPrice is between Bottom Price and Upper Price
+        and returns a dictionary of specified columns.
+
+        Parameters:
+        EquipmentPrice (float): The price of the equipment.
+        df (DataFrame): The DataFrame containing the equipment classes.
+
+        Returns:
+        dict: A dictionary with keys 'Loan Term', 'Markup Price', 'Warranty',
+            'Maintenance', 'Insurance', and 'Business Con'.
+        """
+        
+        param_config = pd.read_csv('best_config_1.csv')
+        param_config = param_config.iloc[:,1:]      
+        
+        # Find the matching row
+        matching_row = param_config[(param_config['Bottom Price'] <= EquipmentPrice) & (EquipmentPrice < param_config['Upper Price'])]
+        
+        if matching_row.empty:
+            return {}  # or raise an exception if preferred
+
+        # Extract the first matching row
+        row = matching_row.iloc[0]
+        
+        # Create the result dictionary
+        result = {
+            'Loan Term': row['Loan Term'],
+            'Markup Price': row['Markup Price'] / 100,
+            'Warranty': row['Warranty'] / 100,
+            'Maintenance': row['Maintenance'] / 100,
+            'Insurance': row['Insurance'] / 100,
+            'Business Con': row['Business Con'] / 100
+        }
+    
+        return result
+
                  
+    # def set_parameter(self, EquipmentPrice):
+        
+    #     result = self.get_parameter(EquipmentPrice)
+        
+    #     self.markup_percentage = result['Markup Price']
+    #     self.maintenance_ratio = result['Maintenance']
+    #     self.warranty_rate = result['Warranty']
+    #     self.insurance_rate = result['Insurance']
+    #     self.business_con_rate = result['Business Con']
 
 
     def getMonthlyPayment(self, EquipmentPrice, LoanTerm, terminal_rate, warranty_yrs, insurance='Yes', maintenance='Yes', extra_warranty=0, bussiness_con='Yes'): 
+        
+        
+        result = self.get_parameter(EquipmentPrice)
+        
+        self.markup_percentage = result['Markup Price']
+        self.maintenance_ratio = result['Maintenance']
+        self.warranty_rate = result['Warranty']
+        self.insurance_rate = result['Insurance']
+        self.business_con_rate = result['Business Con']
+        
+        
         markup_price = EquipmentPrice # as it has been mark upped in the input form
         principal = markup_price
         additional_warranty = extra_warranty
@@ -88,6 +152,12 @@ class Calculator():
             'travel_labor_cost': travel_labor_cost,
             'annual_rate': self.cpi,
             'loan_term': LoanTerm,
+            
+            'warranty_rate': self.warranty_rate,
+            'insurance_rate': self.insurance_rate,
+            'maintenance_ratio': self.maintenance_ratio,
+            'business_con_rate': self.business_con_rate,
+            
         }
 
         return results

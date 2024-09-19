@@ -70,4 +70,6 @@ def updateParameters(calculator, equipment_price, warranty, terminal_rate):
 
 
     
+    
+    
             

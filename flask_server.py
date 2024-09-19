@@ -223,7 +223,7 @@ def set_user_parameters_scheme_2():
         last_payment = results['last_monthlyPayment']
         scheme = "Suggest your Maximum Monthly Rate"
         
-        print(principal, annual_rate, added_value_services, loan_term_years, monthly_payment, last_payment)
+
         
         
         
@@ -237,7 +237,7 @@ def set_user_parameters_scheme_2():
             "scheme": scheme
         }
         
-        print(loan_details_df)
+
         
         # Call calculate_amortization with the loan details dictionary
         # results2 = None
@@ -283,7 +283,7 @@ def calculate_scheme_2(data):
     
     # print(EquipmentPriceVar, MaximumMonthly, terminal_rate, insurance_opt_in, Maintenance, ExtraWarranty, BusinessCon, warranty_yrs)
 
-    print(main_results)
+
     
     return main_results
 
@@ -330,7 +330,7 @@ def calculate_amortization(data):
             added_value_services = loan_details['added_value_services']
             loan_term_years = loan_details['loan_term_years']
             
-            print(principal, annual_rate, monthly_payment, added_value_services)
+
             
             df = loan_amortization_custom_payment_df_only(principal, annual_rate, monthly_payment, added_value_services)
         

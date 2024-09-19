@@ -41,30 +41,31 @@ with col1:
         "Interest Rate (%)", step=1, value=round(st.session_state.parameters['cpi'] * 100))
     st.session_state.parameters['cpi'] = st.session_state.parameters['cpi'] / 100
 
-    st.session_state.parameters['warranty_rate'] = st.number_input(
-        "Warranty Rate (%)", step=1, value=round(st.session_state.parameters['warranty_rate'] * 100))
-    st.session_state.parameters['warranty_rate'] = st.session_state.parameters['warranty_rate'] / 100
+    # st.session_state.parameters['warranty_rate'] = st.number_input(
+    #     "Warranty Rate (%)", step=1, value=round(st.session_state.parameters['warranty_rate'] * 100))
+    # st.session_state.parameters['warranty_rate'] = st.session_state.parameters['warranty_rate'] / 100
 
-    st.session_state.parameters['business_con_rate'] = st.number_input(
-        "Business Continuity Rate (%)", step=1, value=round(st.session_state.parameters['business_con_rate'] * 100))
-    st.session_state.parameters['business_con_rate'] = st.session_state.parameters['business_con_rate'] / 100
+    # st.session_state.parameters['business_con_rate'] = st.number_input(
+    #     "Business Continuity Rate (%)", step=1, value=round(st.session_state.parameters['business_con_rate'] * 100))
+    # st.session_state.parameters['business_con_rate'] = st.session_state.parameters['business_con_rate'] / 100
 
 with col2:
-    st.session_state.parameters['markup_percentage'] = st.number_input(
-        "Markup Percentage (%)", step=1, value=round(st.session_state.parameters['markup_percentage'] * 100))
-    st.session_state.parameters['markup_percentage'] = st.session_state.parameters['markup_percentage'] / 100
+    # st.session_state.parameters['markup_percentage'] = st.number_input(
+    #     "Markup Percentage (%)", step=1, value=round(st.session_state.parameters['markup_percentage'] * 100))
+    # st.session_state.parameters['markup_percentage'] = st.session_state.parameters['markup_percentage'] / 100
 
-    st.session_state.parameters['insurance_rate'] = st.number_input(
-        "Insurance Rate (%)", step=1, value=round(st.session_state.parameters['insurance_rate'] * 100))
-    st.session_state.parameters['insurance_rate'] = st.session_state.parameters['insurance_rate'] / 100
-
-with col3:
-    st.session_state.parameters['maintenance_ratio'] = st.number_input(
-        "Maintenance Ratio (%)", step=1, value=round(st.session_state.parameters['maintenance_ratio'] * 100))
-    st.session_state.parameters['maintenance_ratio'] = st.session_state.parameters['maintenance_ratio'] / 100
-
+    # st.session_state.parameters['insurance_rate'] = st.number_input(
+    #     "Insurance Rate (%)", step=1, value=round(st.session_state.parameters['insurance_rate'] * 100))
+    # st.session_state.parameters['insurance_rate'] = st.session_state.parameters['insurance_rate'] / 100
     st.session_state.parameters['travel_labor_cost'] = st.number_input(
-        "Travel Labor Cost ($)", step=1, value=st.session_state.parameters['travel_labor_cost'])
+    "Travel Labor Cost ($)", step=50, value=st.session_state.parameters['travel_labor_cost'])
+
+# with col3:
+#     # st.session_state.parameters['maintenance_ratio'] = st.number_input(
+#     #     "Maintenance Ratio (%)", step=1, value=round(st.session_state.parameters['maintenance_ratio'] * 100))
+#     # st.session_state.parameters['maintenance_ratio'] = st.session_state.parameters['maintenance_ratio'] / 100
+
+
 
 
 # Save the parameters and send to Flask server
@@ -85,8 +86,8 @@ if st.button("Save Parameters"):
         st.error(f"Error: {e}")
 
 # Display the current values
-st.markdown("### Current Parameter Values:")
-st.json(st.session_state.parameters)
+# st.markdown("### Current Parameter Values:")
+# st.json(st.session_state.parameters)
 
 
 
@@ -108,39 +109,59 @@ if 'amor' not in st.session_state:
 file = 'Input Streamlit v3.xlsx'
 df = pd.read_excel(file)
 
+
 products = df[df['Product Name'].str.contains(r'[a-zA-Z]', na=False)]['Product Name'].unique()
 product_list = ['Others']
 product_list.extend(products.tolist()) 
+
+def set_free_warranty(EquipmentPrice):
+    if EquipmentPrice < 75000:
+        return 1
+    elif EquipmentPrice >= 75000:
+        return 2
 
 with st.expander('Product Selection', expanded=True):
     selected_product = st.selectbox('Choose Product', product_list, placeholder="Select product")
     price = 0
     warranty = 0
+    # suggested_loan_term = Calculator().get_parameter(price)
+    # print(suggested_loan_term['Loan Term'])
 
     if selected_product != 'Others':
         types = df[df['Product Name'] == selected_product]['Type'].dropna().unique().tolist()
         selected_type = st.selectbox('Choose Product Type', types)
         if selected_type:
             price = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Price'].iloc[0] 
-            price = round(price * (1+Calculator().markup_percentage))
+            EquipmentPriceVar = st.number_input("Equipment Cost ($)", step=1, value=price, disabled=False if selected_product == 'Others' else True)
+            # price = round(price * (1+Calculator().markup_percentage))
             warranty = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Warranty (years)'].iloc[0]
+            warranty = set_free_warranty(price)
+            suggested_loan_term = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Loan Term'].iloc[0]
+            
+            
         else:
             price = df.loc[df['Product Name'] == selected_product, 'Price'].iloc[0]
-            price = round(price * (1+Calculator().markup_percentage))
+            EquipmentPriceVar = st.number_input("Equipment Cost ($)", step=1, value=price, disabled=False if selected_product == 'Others' else True)
+            # price = round(price * (1+Calculator().markup_percentage))
             warranty = df.loc[(df['Product Name'] == selected_product), 'Warranty (years)'].iloc[0]
+            warranty = set_free_warranty(price)
+            suggested_loan_term = df.loc[(df['Product Name'] == selected_product), 'Loan Term'].iloc[0]
+
         
         warranty = st.number_input("Warranty (Years)", step=1, value=warranty, disabled=True)
     else:
         selected_product = None
         selected_type = None
-        warranty = st.number_input("Warranty (Years)", step=1, value=1)
+        EquipmentPriceVar = st.number_input("Equipment Cost ($)", step=1, value=price, disabled=False)
+        warranty = st.number_input("Warranty (Years)", step=1, value=set_free_warranty(EquipmentPriceVar), disabled=True)
+        suggested_loan_term = Calculator().get_parameter(EquipmentPriceVar)['Loan Term']
 
 with st.expander('Loan Scheme', expanded=True):
     # Scheme selectbox outside the form
     Scheme = st.selectbox("Choose Loan Scheme", ('By Loan Term', 'Suggest your Maximum Monthly Rate'), index=0)
     # Add the logic to display text based on the selected scheme
-    if Scheme == 'By Loan Term':
-        LoanTermVar = st.number_input("Loan Term (Years)", step=1, value=warranty)
+    if Scheme == 'By Loan Term':   
+        LoanTermVar = st.number_input("Loan Term (Years)", step=1, value=suggested_loan_term)
     elif Scheme == 'Suggest your Maximum Monthly Rate':
         MaximumMonthly = st.slider(label='Maximum Monthly Rate ($)',min_value=100, max_value=2000, value=500, step = 50)
         
@@ -149,26 +170,23 @@ with st.expander('Loan Scheme', expanded=True):
 
 def max_extra_warranty(warranty):
     if warranty == 1:
-        return 1
+        return 2
     elif warranty == 2:
         return 1
-    elif warranty == 3:
-        return 2
-    elif warranty >= 4:
-        return 2
 
 with st.form(key='myform'):
     with st.expander("Added Value Services Customization", expanded=True):
         col1, col2 = st.columns(2)
 
         with col1:
-            EquipmentPriceVar = st.number_input("Equipment Cost ($)", step=1, value=price, disabled=False)
+            
             Maintenance = st.selectbox("Maintenance Opt Out", ('Yes', 'No'))
-            terminal_rate = st.number_input("Terminal Rate (%)", step=0.01, value=0.00)
+            terminal_rate = st.number_input("Terminal Rate (%)", step=1, value=10) / 100
+            insurance_opt_in = st.selectbox("Insurance Opt Out", ('Yes', 'No'))
 
         with col2:
-            insurance_opt_in = st.selectbox("Insurance Opt Out", ('Yes', 'No'))
-            ExtraWarranty = st.number_input("Extra Warranty (Years)", step=1, value=0, max_value=max_extra_warranty(warranty), help = "Consider refinancing equipment for further extra warranty")
+            
+            ExtraWarranty = st.number_input("Extra Warranty (Years)", step=1, value=max_extra_warranty(warranty), max_value=max_extra_warranty(warranty), help = "Consider refinancing equipment for further extra warranty")
             
             if insurance_opt_in == 'No':
                 BusinessCon = st.selectbox("Business Continuity Opt Out", ('Yes', 'No'), index=1, disabled=True)
@@ -194,6 +212,8 @@ with st.form(key='myform'):
     if submitted:
         calculator = Calculator()
         
+        internal_parameter = calculator.get_parameter(EquipmentPriceVar)
+        print(internal_parameter)
         
 
         # updateParameters(calculator, EquipmentPriceVar, warranty, terminal_rate)
@@ -224,7 +244,7 @@ with st.form(key='myform'):
             output = response.json()
             
             main_results = output.get('results')
-            print(main_results)
+   
             
             # response = requests.get("http://127.0.0.1:5000/get_calculation_scheme_1")
         
@@ -297,7 +317,8 @@ with st.form(key='myform'):
         st.session_state.warranty = warranty
         st.session_state.terminal_value = terminal_value
         st.session_state.travel_labor_cost = travel_labor_cost
-
+        
+        
         res1, res2, res3 = st.columns([1, 1, 1])
         with res1: 
             # calculator.setName("Total Invoice ($)")
@@ -309,7 +330,7 @@ with st.form(key='myform'):
             st.markdown("Monthly Repayment ($)")
             st.write(f"### {st.session_state.repayment}")
             if Scheme == 'Suggest your Maximum Monthly Rate':
-                st.caption(f"Last month's payment: {format(last_monthlyPayment, '10.2f')}")
+                st.caption(f"Last month's payment: {format(last_monthlyPayment, '10,.2f')}")
         
                  
         with res2: 
@@ -331,7 +352,7 @@ with st.form(key='myform'):
             
 
             st.markdown("Terminal Value ($)")
-            st.write(f"### {format(st.session_state.terminal_value, '10.2f')}")
+            st.write(f"### {format(st.session_state.terminal_value, '10,.2f')}")
             st.caption('value at the end of warranty years')
         
             
@@ -341,9 +362,16 @@ with st.form(key='myform'):
             
             
 
+        with st.expander("Optimized Parameter", expanded=True):
+            param = {
+                'Warranty Rate (%)': main_results['warranty_rate'] *100,
+                'Insurance Rate (%)': main_results['insurance_rate'] *100,
+                'Maintenance Ratio  (%)': main_results['maintenance_ratio'] *100,
+                'Business Continuity Rate (%)': main_results['business_con_rate'] *100,
+                    }
+            param_df = pd.DataFrame(param, index=[0])
+            st.dataframe(param_df, hide_index=True)
 
-
-            
         
  
         
@@ -352,26 +380,26 @@ with st.form(key='myform'):
             
             with res4:
                 st.markdown("Maintenance Fee ($)")
-                st.write(f"### {format(maintenance_fee, '10.2f')}")
+                st.write(f"### {format(maintenance_fee, '10,.2f')}")
                 
             with res5:
                 st.markdown("Extra Warranty Fee ($)")
-                st.write(f"### {format(warranty_fee, '10.2f')}")
+                st.write(f"### {format(warranty_fee, '10,.2f')}")
                 
             with res6:
                 st.markdown("Insurance Fee ($)")
-                st.write(f"### {format(insurance_fee, '10.2f')}")
+                st.write(f"### {format(insurance_fee, '10,.2f')}")
                 
             res7, res8, res9 = st.columns([1, 1, 1])
             
                 
             with res7:
                 st.markdown("Travel Labor Cost ($)")
-                st.write(f"### {format(st.session_state.travel_labor_cost, '10.2f')}")
+                st.write(f"### {format(st.session_state.travel_labor_cost, '10,.2f')}")
                 
             with res8:
                 st.markdown("Business Continuity Fee ($)")
-                st.write(f"### {format(main_results['business_con_fee'], '10.2f')}")
+                st.write(f"### {format(main_results['business_con_fee'], '10,.2f')}")
                 
         
         st.divider()        
