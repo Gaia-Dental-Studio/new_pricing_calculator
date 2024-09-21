@@ -84,7 +84,7 @@ class Calculator():
             'Warranty': row['Warranty'] / 100,
             'Maintenance': row['Maintenance'] / 100,
             'Insurance': row['Insurance'] / 100,
-            'Business Con': row['Business Con'] / 100
+            'Business Con': row['Business Con'] / 100,
         }
     
         return result
@@ -101,7 +101,16 @@ class Calculator():
     #     self.business_con_rate = result['Business Con']
 
 
-    def getMonthlyPayment(self, EquipmentPrice, LoanTerm, terminal_rate, warranty_yrs, insurance='Yes', maintenance='Yes', extra_warranty=0, bussiness_con='Yes'): 
+    def set_terminal_rate(self, LoanTerm):
+        
+        if LoanTerm <= 3:
+            return 0.5
+        elif LoanTerm <= 5:
+            return 0.3
+        elif LoanTerm <= 7:
+            return 0.2
+
+    def getMonthlyPayment(self, EquipmentPrice, LoanTerm, warranty_yrs, insurance='Yes', maintenance='Yes', extra_warranty=0, bussiness_con='Yes', discount_rate=0, upfront_payment=0): 
         
         
         result = self.get_parameter(EquipmentPrice)
@@ -113,24 +122,25 @@ class Calculator():
         self.business_con_rate = result['Business Con']
         
         
-        markup_price = EquipmentPrice # as it has been mark upped in the input form
-        principal = markup_price
+        markup_price = EquipmentPrice 
+        total_upfront = upfront_payment/100 * EquipmentPrice 
+        principal = markup_price * (1 - discount_rate/100) - total_upfront
         additional_warranty = extra_warranty
-        # maintenance_fee = (markup_price * self.maintenance_ratio if markup_price > 2500 else 0) if maintenance == 'Yes' else 0 
-        maintenance_fee = (markup_price * self.maintenance_ratio * (warranty_yrs + additional_warranty)) if maintenance == 'Yes' else 0 
- 
-        # warranty_yrs = 1 if markup_price <= 2000 else 2 if markup_price <= 5000 else 3 if markup_price <= 10000 else 5 if markup_price <= 30000 else 10
         
+        added_value_period = LoanTerm if LoanTerm >= warranty_yrs + additional_warranty else warranty_yrs + additional_warranty
+        
+        maintenance_fee = markup_price * self.maintenance_ratio * added_value_period if maintenance == 'Yes' else 0 
+ 
         warranty_fee = markup_price * self.warranty_rate * (additional_warranty)
-        insurance_fee = markup_price * self.insurance_rate * (warranty_yrs + additional_warranty) if insurance == 'Yes' else 0
-        travel_labor_cost = self.travel_labor_cost * LoanTerm
-        business_con_fee = (markup_price * self.business_con_rate * (warranty_yrs + additional_warranty) if insurance == 'Yes' else 0) if bussiness_con == 'Yes' else 0
+        insurance_fee = markup_price * self.insurance_rate * added_value_period if insurance == 'Yes' else 0
+        travel_labor_cost = self.travel_labor_cost * added_value_period
+        business_con_fee = markup_price * self.business_con_rate * added_value_period if bussiness_con == 'Yes' else 0
         
         
         total_added_value_services = maintenance_fee + warranty_fee + insurance_fee + business_con_fee + travel_labor_cost
-        total_payment = total_added_value_services + principal
+        total_payment = total_added_value_services + principal + upfront_payment
         
-        terminal_value = markup_price * terminal_rate 
+        terminal_value = markup_price * self.set_terminal_rate(LoanTerm)
         
         
         monthly_interest_rate = self.monthly_interest_rate
@@ -152,7 +162,10 @@ class Calculator():
             'travel_labor_cost': travel_labor_cost,
             'annual_rate': self.cpi,
             'loan_term': LoanTerm,
+            'upfront_payment': upfront_payment,
             
+            
+            # internal parameters 
             'warranty_rate': self.warranty_rate,
             'insurance_rate': self.insurance_rate,
             'maintenance_ratio': self.maintenance_ratio,
@@ -163,6 +176,10 @@ class Calculator():
         return results
     
     def getLoanTerm(self, EquipmentPrice, monthlyPayment, terminal_rate, warranty_yrs, insurance='Yes', maintenance='Yes', extra_warranty=0, bussiness_con='Yes'): 
+        
+        # Since the loan term are defined as multiplying factor to calculate the added value fee, this method is mathematically impossible to calculate
+        
+        
         # Calculating the markup price (principal)
         markup_price = EquipmentPrice  # as it has been marked up in the input form
         principal = markup_price

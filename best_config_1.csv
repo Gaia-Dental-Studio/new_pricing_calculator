@@ -1,6 +1,6 @@
-,Unnamed: 0,Class,Bottom Price,Upper Price,Loan Term,Markup Price,Warranty,Maintenance,Insurance,Business Con
-0,0,1,0,20000,2,7,8,9,7,7
-1,1,2,20000,50000,5,7,8,7,7,7
-2,2,3,50000,100000,7,7,8,7,5,7
-3,3,4,100000,200000,7,7,6,5,5,7
-4,4,5,200000,1000000,7,1,2,5,2,5
+,Class,Bottom Price,Upper Price,Loan Term,Markup Price,Warranty,Maintenance,Insurance,Business Con
+0,1,0,20000,2,9,8,9,5,7
+1,2,20000,50000,3,9,6,9,3,7
+2,3,50000,100000,5,7,6,5,3,7
+3,4,100000,200000,7,7,6,5,1,5
+4,5,200000,1000000,7,5,6,5,1,3

@@ -3,8 +3,13 @@ from single_calculator import *
 from loan_amortization import *
 import pandas as pd
 import numpy as np
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADER'] = 'Content-Type'
+
+
 
 # Dictionary to store the parameters
 parameters = {
@@ -51,7 +56,8 @@ def set_user_parameters_scheme_1():
     if not data or not isinstance(data, dict):
         return jsonify({"error": "Invalid input"}), 400
     
-    required_keys = ['Maintenance', 'terminal_rate', 'insurance_opt_in', 'ExtraWarranty', 'BusinessCon', 'LoanTermVar', 'EquipmentPriceVar', 'FreeWarranty']
+    required_keys = ['Maintenance', 'insurance_opt_in', 'ExtraWarranty', 'BusinessCon', 
+                     'LoanTermVar', 'EquipmentPriceVar', 'FreeWarranty', 'discount_rate', 'upfront_payment']
     missing_keys = [key for key in required_keys if key not in data]
     
     if missing_keys:
@@ -108,19 +114,21 @@ def set_user_parameters_scheme_1():
 
 def calculate_scheme_1(data):
     Maintenance = data['Maintenance']
-    terminal_rate = data['terminal_rate']
+    # terminal_rate = data['terminal_rate'] # no more defined by users, but ours to calculate
     insurance_opt_in = data['insurance_opt_in']
     ExtraWarranty = data['ExtraWarranty']
     BusinessCon = data['BusinessCon']
     LoanTermVar = data['LoanTermVar']
     EquipmentPriceVar = data['EquipmentPriceVar']
     warranty_yrs = data['FreeWarranty']
+    discount_rate = data['discount_rate']
+    upfront_payment = data['upfront_payment']
     
     calculator = Calculator()
     
     main_results = calculator.getMonthlyPayment(
-        EquipmentPriceVar, LoanTermVar, terminal_rate, warranty_yrs, 
-        insurance_opt_in, Maintenance, ExtraWarranty, BusinessCon
+        EquipmentPriceVar, LoanTermVar, warranty_yrs, 
+        insurance_opt_in, Maintenance, ExtraWarranty, BusinessCon, discount_rate, upfront_payment
     )
     
     return main_results

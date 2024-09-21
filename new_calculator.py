@@ -24,7 +24,7 @@ st.markdown("This interface is only visible for internals. Not for public/client
 # Initialize session state for all parameters if not already done
 if 'parameters' not in st.session_state:
     st.session_state.parameters = {
-        'cpi': 0.10,
+        'cpi': 0.12,
         'markup_percentage': 0.00,
         'maintenance_ratio': 0.01,
         'warranty_rate': 0.01,
@@ -136,7 +136,8 @@ with st.expander('Product Selection', expanded=True):
             # price = round(price * (1+Calculator().markup_percentage))
             warranty = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Warranty (years)'].iloc[0]
             warranty = set_free_warranty(price)
-            suggested_loan_term = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Loan Term'].iloc[0]
+            # suggested_loan_term = df.loc[(df['Product Name'] == selected_product) & (df['Type'] == selected_type), 'Loan Term'].iloc[0]
+            suggested_loan_term = Calculator().get_parameter(EquipmentPriceVar)['Loan Term']
             
             
         else:
@@ -145,7 +146,8 @@ with st.expander('Product Selection', expanded=True):
             # price = round(price * (1+Calculator().markup_percentage))
             warranty = df.loc[(df['Product Name'] == selected_product), 'Warranty (years)'].iloc[0]
             warranty = set_free_warranty(price)
-            suggested_loan_term = df.loc[(df['Product Name'] == selected_product), 'Loan Term'].iloc[0]
+            # suggested_loan_term = df.loc[(df['Product Name'] == selected_product), 'Loan Term'].iloc[0]
+            suggested_loan_term = Calculator().get_parameter(EquipmentPriceVar)['Loan Term']
 
         
         warranty = st.number_input("Warranty (Years)", step=1, value=warranty, disabled=True)
@@ -165,6 +167,15 @@ with st.expander('Loan Scheme', expanded=True):
     elif Scheme == 'Suggest your Maximum Monthly Rate':
         MaximumMonthly = st.slider(label='Maximum Monthly Rate ($)',min_value=100, max_value=2000, value=500, step = 50)
         
+        
+with st.expander('Equipment Discount', expanded=True):
+    
+    discount_rate = st.number_input("Discount Rate (%)", step=1, value=0)
+    
+    
+with st.expander('Upfront Payment', expanded=True):
+    upfront_payment = st.selectbox("Percentage to Price (%)", (0, 10, 15, 20), index=0)
+        
 
     # st.divider()
 
@@ -181,7 +192,7 @@ with st.form(key='myform'):
         with col1:
             
             Maintenance = st.selectbox("Maintenance Opt Out", ('Yes', 'No'))
-            terminal_rate = st.number_input("Terminal Rate (%)", step=1, value=10) / 100
+            # terminal_rate = st.number_input("Terminal Rate (%)", step=1, value=10) / 100
             insurance_opt_in = st.selectbox("Insurance Opt Out", ('Yes', 'No'))
 
         with col2:
@@ -196,7 +207,7 @@ with st.form(key='myform'):
 
     if not EquipmentPriceVar: EquipmentPriceVar = 0
     if not insurance_opt_in: insurance_opt_in = 'Yes'
-    if not terminal_rate: terminal_rate = 0.00
+    # if not terminal_rate: terminal_rate = 0.00
     if not Maintenance: Maintenance = 'Yes'
     if not ExtraWarranty: ExtraWarranty = 0
     if not BusinessCon: BusinessCon = 'Yes'
@@ -223,13 +234,15 @@ with st.form(key='myform'):
             
             st.session_state.user_parameters = {
                 'Maintenance' : Maintenance,
-                'terminal_rate' : terminal_rate,
+                # 'terminal_rate' : terminal_rate,  #terminal rate is no more being defined by user
                 'insurance_opt_in' : insurance_opt_in,
                 'ExtraWarranty' : ExtraWarranty,
                 'BusinessCon' : BusinessCon,
                 'LoanTermVar' : LoanTermVar,
                 'EquipmentPriceVar' : EquipmentPriceVar,
-                'FreeWarranty': warranty
+                'FreeWarranty': warranty,
+                'discount_rate': discount_rate,
+                'upfront_payment': upfront_payment
             }
 
             user_parameters = st.session_state.user_parameters
