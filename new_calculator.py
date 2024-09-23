@@ -34,7 +34,7 @@ if 'parameters' not in st.session_state:
     }
 
 # Create columns for input fields
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 
 with col1:
     st.session_state.parameters['cpi'] = st.number_input(
@@ -65,7 +65,11 @@ with col2:
 #     #     "Maintenance Ratio (%)", step=1, value=round(st.session_state.parameters['maintenance_ratio'] * 100))
 #     # st.session_state.parameters['maintenance_ratio'] = st.session_state.parameters['maintenance_ratio'] / 100
 
+st.write('Interest rate and travel labor cost are yearly values')
 
+with st.expander('Equipment Discount', expanded=True):
+    
+    discount_rate = st.number_input("Discount Rate (%)", step=1, value=0)
 
 
 # Save the parameters and send to Flask server
@@ -150,12 +154,12 @@ with st.expander('Product Selection', expanded=True):
             suggested_loan_term = Calculator().get_parameter(EquipmentPriceVar)['Loan Term']
 
         
-        warranty = st.number_input("Warranty (Years)", step=1, value=warranty, disabled=True)
+        warranty = st.number_input("Free Warranty (Years)", step=1, value=warranty, disabled=True)
     else:
         selected_product = None
         selected_type = None
         EquipmentPriceVar = st.number_input("Equipment Cost ($)", step=1, value=price, disabled=False)
-        warranty = st.number_input("Warranty (Years)", step=1, value=set_free_warranty(EquipmentPriceVar), disabled=True)
+        warranty = st.number_input("Free Warranty (Years)", step=1, value=set_free_warranty(EquipmentPriceVar), disabled=True)
         suggested_loan_term = Calculator().get_parameter(EquipmentPriceVar)['Loan Term']
 
 with st.expander('Loan Scheme', expanded=True):
@@ -168,9 +172,7 @@ with st.expander('Loan Scheme', expanded=True):
         MaximumMonthly = st.slider(label='Maximum Monthly Rate ($)',min_value=100, max_value=2000, value=500, step = 50)
         
         
-with st.expander('Equipment Discount', expanded=True):
-    
-    discount_rate = st.number_input("Discount Rate (%)", step=1, value=0)
+
     
     
 with st.expander('Upfront Payment', expanded=True):
