@@ -138,7 +138,7 @@ class Calculator():
         
         
         total_added_value_services = maintenance_fee + warranty_fee + insurance_fee + business_con_fee + travel_labor_cost
-        total_payment = total_added_value_services + principal + upfront_payment
+        total_payment = total_added_value_services + principal + total_upfront
         
         terminal_value = markup_price * self.set_terminal_rate(LoanTerm)
         
@@ -163,6 +163,7 @@ class Calculator():
             'annual_rate': self.cpi,
             'loan_term': LoanTerm,
             'upfront_payment': upfront_payment,
+            'total_upfront': total_upfront,
             
             
             # internal parameters 
