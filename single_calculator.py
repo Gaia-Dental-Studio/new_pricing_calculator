@@ -171,6 +171,8 @@ class Calculator():
             'insurance_rate': self.insurance_rate,
             'maintenance_ratio': self.maintenance_ratio,
             'business_con_rate': self.business_con_rate,
+            'interest_rate': self.cpi,
+            
             
         }
 
